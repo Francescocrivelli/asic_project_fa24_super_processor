@@ -37,6 +37,10 @@ module ALUTestbench();
     reg [30:0] rand_31;
     reg [14:0] rand_15;
 
+    reg [31:0] a, b;
+    reg [3:0] alu_op;
+    wire [31:0] out;
+
     // Signed operations; these are useful
     // for signed operations
     wire signed [31:0] B_signed;
@@ -45,6 +49,8 @@ module ALUTestbench();
     wire signed_comp, unsigned_comp;
     assign signed_comp = ($signed(A) < $signed(B));
     assign unsigned_comp = A < B;
+
+    reg [31:0] expected_result;
 
     // Task for checking output
     task checkOutput;
@@ -74,8 +80,33 @@ module ALUTestbench();
         .ALUop(ALUop),
         .Out(DUTout));
 
-    integer i;
+    ALU ALU_init (
+        .A(a),
+        .B(b),
+        .ALUop(alu_op),
+        .Out(out)
+    );
+
+    integer i, j;
     localparam loops = 25; // number of times to run the tests for
+
+    function [31:0] calc_result(input [31:0] a, input [31:0] b, input [3:0] alu_op);
+        begin
+            case(alu_op)
+                4'd0: calc_result = a + b; 
+                4'd1: calc_result = a - b;
+                4'd2: calc_result = a & b;
+                4'd3: calc_result = a | b;
+                4'd4: calc_result = a ^ b;
+                4'd5: calc_result = ($signed(a) < $signed(b)) ? 1 : 0;
+                4'd6: calc_result = (a < b) ? 1 : 0;
+                4'd7: calc_result = a << b[4:0];
+                4'd8: calc_result = $signed(a) >>> $signed(b[4:0]);
+                4'd9: calc_result = a >> b[4:0];
+                4'd10: calc_result = b;
+            endcase
+        end
+    endfunction
 
     // Testing logic:
     initial begin
@@ -138,6 +169,33 @@ module ALUTestbench();
         ///////////////////////////////
         // Hard coded tests go here
         ///////////////////////////////
+
+        
+
+        // Initial values
+        a = 0;
+        b = 0;
+        alu_op = 0;
+
+            for (i = 0; i < 11; i = i + 1) begin
+                alu_op = i;
+                for (j = 0; j < 100; j = j + 1) begin
+                    a = {$random} & 32'hFFFFFFFF;
+                    b = {$random} & 32'hFFFFFFFF;
+
+                    $display("A=%d", a);
+                    expected_result = calc_result(a, b, alu_op);
+
+
+                    #2;
+                    
+                    if (out == expected_result) begin
+                        $display(" [ passed ] Test ( %d-%d ), [ %d == %d ] (decimal)", i, j, out, expected_result);
+                    end else begin
+                        $display(" [ failed ] Test ( %d-%d ), [ %d == %d ] (decimal)", i, j, out, expected_result);
+                    end
+                end
+            end
 
         $display("\n\nALL TESTS PASSED!");
         $vcdplusoff;

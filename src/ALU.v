@@ -17,6 +17,58 @@ module ALU(
     output reg [31:0] Out
 );
 
-    // Implement your ALU here, then delete this comment
+
+reg [31:0] sol;
+
+
+
+always@(*) begin
+    case (ALUop) 
+        `ALU_ADD: begin
+            sol = A + B;
+        end
+        `ALU_SUB: begin
+            sol = A - B;
+        end
+        `ALU_AND: begin
+            sol = A & B; 
+        end
+        `ALU_OR: begin
+            sol = A | B;
+        end
+        `ALU_XOR: begin
+            sol = A ^ B;
+        end
+        `ALU_SLT: begin
+            if ($signed(A) < $signed(B)) begin
+                sol = 1;
+            end
+        end
+        `ALU_SLTU: begin
+            if (A < B) begin
+                sol = 1;
+            end
+        end
+        `ALU_SLL: begin
+            sol = A << B[4:0];
+        end
+        `ALU_SRA: begin
+            sol = $signed(A) >>> B[4:0];
+        end
+        `ALU_SRL: begin
+            sol = A >> B[4:0];
+        end
+        `ALU_COPY_B: begin
+            sol = B;
+        end
+        `ALU_XXX: begin
+            sol = 0;
+        end
+        default: sol = 0;
+    endcase
+
+    Out = sol;
+end
+
 
 endmodule
