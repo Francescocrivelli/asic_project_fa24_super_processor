@@ -1,1 +1,1 @@
-# asic_project_fa24_super_processor
+# EECS 151/251A ASIC Project Skeleton for Fall 2024
