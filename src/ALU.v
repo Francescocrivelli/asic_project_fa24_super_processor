@@ -40,14 +40,10 @@ always@(*) begin
             sol = A ^ B;
         end
         `ALU_SLT: begin
-            if ($signed(A) < $signed(B)) begin
-                sol = 1;
-            end
+            sol = ($signed(A) < $signed(B)) ? 1 : 0;
         end
         `ALU_SLTU: begin
-            if (A < B) begin
-                sol = 1;
-            end
+            sol = (A < B) ? 1 : 0;
         end
         `ALU_SLL: begin
             sol = A << B[4:0];

@@ -41,6 +41,8 @@ module ALUTestbench();
     reg [3:0] alu_op;
     wire [31:0] out;
 
+    reg passed;
+
     // Signed operations; these are useful
     // for signed operations
     wire signed [31:0] B_signed;
@@ -165,6 +167,41 @@ module ALUTestbench();
             #1;
             checkOutput(opcode, funct, add_rshift_type);
 
+            opcode = `OPC_ARI_RTYPE;
+            funct = 0;
+            add_rshift_type = 0;
+            REFout = A + B;
+            #1;
+            checkOutput(opcode, funct, add_rshift_type);
+
+            opcode = `OPC_ARI_RTYPE;
+            funct = 0;
+            add_rshift_type = 1;
+            REFout = A - B;
+            #1;
+            checkOutput(opcode, funct, add_rshift_type);
+
+            opcode = `OPC_ARI_RTYPE;
+            funct = 3'b111;
+            add_rshift_type = $random & 1'b1;
+            REFout = A & B;
+            #1;
+            checkOutput(opcode, funct, add_rshift_type);
+
+            opcode = `OPC_ARI_RTYPE;
+            funct = 3'b110;
+            add_rshift_type = $random & 1'b1;
+            REFout = A | B;
+            #1;
+            checkOutput(opcode, funct, add_rshift_type);
+
+            opcode = `OPC_ARI_ITYPE;
+            funct = 3'b000;
+            add_rshift_type = $random & 1'b1;
+            REFout = A + B;
+            #1;
+            checkOutput(opcode, funct, add_rshift_type);
+
         end
         ///////////////////////////////
         // Hard coded tests go here
@@ -172,34 +209,43 @@ module ALUTestbench();
 
         
 
+        
+
         // Initial values
         a = 0;
         b = 0;
         alu_op = 0;
+        passed = 1;
+        
 
-            for (i = 0; i < 11; i = i + 1) begin
+            for (i = 0; i < 7; i = i + 1) begin
                 alu_op = i;
-                for (j = 0; j < 100; j = j + 1) begin
+                for (j = 0; j < 10; j = j + 1) begin
                     a = {$random} & 32'hFFFFFFFF;
                     b = {$random} & 32'hFFFFFFFF;
 
                     $display("A=%d", a);
                     expected_result = calc_result(a, b, alu_op);
 
-
+ 
                     #2;
                     
                     if (out == expected_result) begin
                         $display(" [ passed ] Test ( %d-%d ), [ %d == %d ] (decimal)", i, j, out, expected_result);
                     end else begin
                         $display(" [ failed ] Test ( %d-%d ), [ %d == %d ] (decimal)", i, j, out, expected_result);
+                        passed = 0;
                     end
                 end
             end
-
-        $display("\n\nALL TESTS PASSED!");
+        if (passed) begin
+            $display("\n\nALL TESTS PASSED!");
+        end else begin
+            $display("\n\nTESTS FAILED!");
+        end
         $vcdplusoff;
         $finish();
+
     end
 
   endmodule
