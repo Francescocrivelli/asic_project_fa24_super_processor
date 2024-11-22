@@ -29,13 +29,27 @@ wire [4:0] rs1;
 wire [6:0] funct7;
 wire [11:0] imm;
 
+parameter RType = 7'b0110011;
+parameter IType = 7'b0010011;
+parameter SType = 7'b0100011;
+parameter BType = 7'b1100011;
+parameter JType = 7'b1101111;
+parameter JRType = 7'b1100111;
+parameter AUIPCType = 
+
 
 
   // Implement your core here, then delete this comment
-  if (reset == 1'b1) begin 
-    PC = `PC_RESET;
+  always@(*) begin
+    if (reset == 1'b1) begin 
+      PC = `PC_RESET;
 
+    end
+    case (opcode)
+
+    endcase
   end
+  
 
   // // // CSR
   // reg [31:0] tohost;

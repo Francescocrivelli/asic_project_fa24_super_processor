@@ -4,22 +4,22 @@ module immGen (
     output reg [31:0] imm
 );
 
-`define R     4'd0
-`define S     4'd1
-`define B     4'd2
-`define U     4'd3
-`define J     4'd4
-`define I     4'd5
-`define I_star     4'd6
+// `define R     4'd0
+`define S     4'd0
+`define B     4'd1
+`define U     4'd2
+`define J     4'd3
+`define I     4'd4
+`define I_star     4'd5
 
 
 
 
 always @ (*) begin
     case (imm_sel)
-        `R: begin // should we ignore the case R since there is NO immediate
-            imm = 32'b0; // just setting it to 0 as a place holder
-        end
+        // `R: begin // should we ignore the case R since there is NO immediate
+        //     imm = 32'b0; // just setting it to 0 as a place holder
+        // end
         `I: begin
             imm = {{20{inst[31]}}, inst[31:20]}
         end
@@ -38,10 +38,6 @@ always @ (*) begin
         `J: begin //20 bits immediate before sign extension
             imm = {{12{inst[31]}}, inst[31], inst[19:12], inst[20], inst[30:21], 1'b0}
         end
-    endcase
-
-    
+        endcase 
 end
-
-
 endmodule
