@@ -38,8 +38,4 @@
         regs[wb_addr] <= wb_data;
     end else
  end
-
-
-
-
  endmodule

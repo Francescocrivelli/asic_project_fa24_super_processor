@@ -28,15 +28,14 @@ wire [2:0] funct3;
 wire [6:0] funct7;
 wire [11:0] imm;
 
-parameter RType = 7'b0110011;
-parameter IType = 7'b0010011;
-parameter SType = 7'b0100011;
-parameter BType = 7'b1100011;
-parameter JType = 7'b1101111;
-parameter JRType = 7'b1100111;
-parameter AUIPCType = 7'b0010111;
-parameter LUIType = 7'b0110111;
-parameter EnvType = 7'b1110111;
+parameter R_TYPE = 7'b0110011;
+parameter I_TYPE = 7'b0010011;
+parameter S_TYPE = 7'b0100011;
+parameter B_TYPE = 7'b1100011;
+parameter J_TYPE = 7'b1101111;
+parameter JR_TYPE = 7'b1100111;
+parameter AUIPC_TYPE = 7'b0010111;
+parameter LUI_TYPE = 7'b0110111;
 
 
 
@@ -47,7 +46,10 @@ parameter EnvType = 7'b1110111;
 
     end
     case (opcode)
-      
+      `OPC_ARI_RTYPE: begin
+
+      end
+
 
     endcase
   end
