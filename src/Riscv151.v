@@ -20,12 +20,11 @@ module Riscv151(
 
 reg [31:0] PC;
 
-wire [6:0] opcode = ichache_dout[6:0];
+wire [6:0] opcode = icache_dout[6:0];
 wire [4:0] rd;
 wire [4:0] rs1;
 wire [4:0] rs2;
 wire [2:0] funct3;
-wire [4:0] rs1;
 wire [6:0] funct7;
 wire [11:0] imm;
 
@@ -35,28 +34,31 @@ parameter SType = 7'b0100011;
 parameter BType = 7'b1100011;
 parameter JType = 7'b1101111;
 parameter JRType = 7'b1100111;
-parameter AUIPCType = 
+parameter AUIPCType = 7'b0010111;
+parameter LUIType = 7'b0110111;
+parameter EnvType = 7'b1110111;
 
 
 
   // Implement your core here, then delete this comment
-  always@(*) begin
-    if (reset == 1'b1) begin 
+  always @ (*) begin
+    if (reset) begin 
       PC = `PC_RESET;
 
     end
     case (opcode)
+      
 
     endcase
   end
   
 
-  // // // CSR
-  // reg [31:0] tohost;
+  // // CSR
+  reg [31:0] tohost;
 
-  // always @ (posedge) begin
-  //   tohost <= csr;
-  // end
+  always @ (posedge clk) begin
+    tohost <= csr;
+  end
   
 
 endmodule

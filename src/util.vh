@@ -1,4 +1,4 @@
-pull`ifndef UTIL
+`ifndef UTIL
 `define UTIL
 
 `define ceilLog2(x) ( \

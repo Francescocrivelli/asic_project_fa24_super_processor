@@ -1,8 +1,7 @@
 `include "util.vh"
 `include "const.vh"
 
-module ExtMemModel
-(
+module ExtMemModel(
   input         clk,
   input         reset,
 
@@ -96,3 +95,4 @@ module ExtMemModel
   assign mem_req_data_ready = state_busy && state_rw;
 
 endmodule
+

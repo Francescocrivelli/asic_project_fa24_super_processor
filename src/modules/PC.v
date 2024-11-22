@@ -15,7 +15,6 @@
 module PC(
     input clk,
     input [31:0] PC_Cur,
-
     output reg [31:0] PC_Next
 );
 

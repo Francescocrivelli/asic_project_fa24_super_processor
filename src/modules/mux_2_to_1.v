@@ -5,6 +5,5 @@ module mux_2_to_1(
     output wire[31:0] out
 );
 assign out = (select) ? in_2 : in_1
-// when using always at star block the output should be a reg
 
 endmodule
