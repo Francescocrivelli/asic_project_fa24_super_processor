@@ -1,5 +1,7 @@
 //=========================================================================
 // REG FILE
+// important to know: 
+//          -   register (and so the regFile) is synchronous write and asynchornous read
 //-------------------------------------------------------------------------
  
  module regFile () (
