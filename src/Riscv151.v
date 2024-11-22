@@ -18,6 +18,16 @@ module Riscv151(
 
 );
 
+  reg [31:0] PC;
+
   // Implement your core here, then delete this comment
+  always @(*) begin
+    if (reset) begin
+      PC = PC_RESET;
+      
+
+    end
+  end
+
 
 endmodule
