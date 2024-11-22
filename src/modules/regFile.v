@@ -4,7 +4,7 @@
 //          -   register (and so the regFile) is synchronous write and asynchornous read
 //-------------------------------------------------------------------------
  
- module regFile () (
+ module regFile (
     input clk,
     input reset,
 

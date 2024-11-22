@@ -92,3 +92,15 @@ endmodule // RAM
 /*
  To add: multiple ports, synchronous read, ASIC synthesis support.
  */
+
+ // Parameterized Register of D-Type Flip-flops
+module PARAM_REGISTER # (parameter WIDTH = 1) (
+   
+   input [WIDTH-1:0]      d; 
+   input 	     clk;
+   
+   output reg [WIDTH-1:0] q;
+);
+   always @(posedge clk)
+    q <= d;
+endmodule // REGISTER
