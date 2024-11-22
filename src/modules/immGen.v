@@ -1,7 +1,7 @@
 module immGen (
     input [31:0] inst,
     input [4:0] imm_sel,
-    output [31:0] imm
+    output reg [31:0] imm
 );
 
 `define R     4'd0
