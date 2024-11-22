@@ -8,12 +8,15 @@ module mux_3_to_1(
 );
 
 always@(*) begin
-    case (sel)
-        2'b00: out = in_1;
-        2'b01: out = in_2;
-        2'b10: out = in_3;
-        default: out = 32'b0;
-    endcase
+
+    
+    if (sel == 2'b00) begin
+        out = in_1;
+    end else if (sel == 2'b01) begin
+        out = in_2;
+    end else begin
+        out = in_3;
+    end
 end
 
 
