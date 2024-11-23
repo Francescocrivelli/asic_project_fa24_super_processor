@@ -94,7 +94,8 @@ PARAM_REGISTER pc_reg (
   .q(PC_Cur)
 );
 
-assign icache_addr = PC_Cur;
+##comment for @matias below
+assign icache_addr = PC_Cur;   @matias ichache adress is an output and you are setting it to something.
 
 
 
@@ -293,19 +294,19 @@ PARAM_REGISTER pc_ALU_to_MEM_WB (WIDTH=32) (
   .out(PC_MEM_WB)
 );
 
-// PARAM_REGISTER ALU_to_MEM_WB (WIDTH=32) (
-//   .clk(clk),
-//   .reset(reset),
-//   .in(ALUOut),
-//   .out(ALUOut_MEM_WB)
-// );
+PARAM_REGISTER ALU_to_MEM_WB (WIDTH=32) (
+  .clk(clk),
+  .reset(reset),
+  .in(ALUOut),
+  .out(ALUOut_MEM_WB)
+);
 
-// PARAM_REGISTER rs2_data_ALU_to_MEM_WB (WIDTH=32) ( // mem write data
-//   .clk(clk),
-//   .reset(reset),
-//   .in(rs2_data_ALU),
-//   .out(rs2_data_MEM_WB)
-// );
+PARAM_REGISTER rs2_data_ALU_to_MEM_WB (WIDTH=32) ( // mem write data
+  .clk(clk),
+  .reset(reset),
+  .in(rs2_data_ALU),
+  .out(rs2_data_MEM_WB)
+);
 
 PARAM_REGISTER inst_ALU_to_MEM_WB (WIDTH=32) (
   .clk(clk),
@@ -330,8 +331,36 @@ PARAM_REGISTER inst_ALU_to_MEM_WB (WIDTH=32) (
     // output [31:0] dcache_din,
     // input [31:0] dcache_dout, 
   
+
+  @matias
+  //I am confused with that is dcache dout
+
+  wire [31:0] rs2_data_MEM_WB ;
+
   assign dcache_addr = ALUOut_MEM_WB;
+  assign dcache_din = rs2_data_ALU;
   assign dcache_we = MemRW;
+  assign dcache_dout = what is the difference ?
+  assign dcache_re = what is the difference ?
+
+  //control path for the mux
+  wire WB_sel;
+
+  //PC+4 MEM_WB STAGE
+  wire [31:0] PC_MEM_WB_PLUS_4 ;
+  PC PC_MEM_WB(
+    .PC_Cur(PC_MEM_WB),
+    .PC_Next(PC_MEM_WB_PLUS_4)
+  )
+
+
+  mux_3_to_1 mux_MEM_WB(
+    .in_1(),
+    .in_2(ALUOut_MEM_WB),
+    .in_3(PC_MEM_WB_PLUS_4),
+    .sel(WB_sel)
+  );
+
   
 
 
