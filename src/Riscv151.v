@@ -300,6 +300,12 @@ PARAM_REGISTER ALU_to_MEM_WB (WIDTH=32) (
   .in(ALUOut),
   .out(ALUOut_MEM_WB)
 );
+PARAM_REGISTER ALU_to_MEM_WB (WIDTH=32) (
+  .clk(clk),
+  .reset(reset),
+  .in(ALUOut),
+  .out(ALUOut_MEM_WB)
+);
 
 PARAM_REGISTER rs2_data_ALU_to_MEM_WB (WIDTH=32) ( // mem write data
   .clk(clk),
@@ -337,6 +343,10 @@ PARAM_REGISTER inst_ALU_to_MEM_WB (WIDTH=32) (
 
   wire [31:0] rs2_data_MEM_WB ;
 
+  wire [31:0] pc_MEM_WB_plus_4;
+  
+
+  //Memory
   assign dcache_addr = ALUOut_MEM_WB;
   assign dcache_din = rs2_data_ALU;
   assign dcache_we = MemRW;
