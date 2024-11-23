@@ -1,4 +1,5 @@
 `include "const.vh"
+`include "Opcode.vh"
 
 module Riscv151(
     input clk,
@@ -26,7 +27,7 @@ wire [6:0] opcode = icache_dout[6:0];
 wire [4:0] rd;
 wire [4:0] rs1;
 wire [4:0] rs2;
-wire [2:0] funct3;
+wire [2:0] funct3 = icache_dout[];
 wire [6:0] funct7;
 wire [11:0] imm;
 
@@ -41,10 +42,10 @@ parameter AUIPC_TYPE = 7'b0010111;
 parameter LUI_TYPE = 7'b0110111;
 
 /* Control Logic Output Signals */
-wire PCSel;
+reg PCSel;
 wire RegWEn;
 wire [4:0] ImmSel;
-wire BrUn;
+//wire BrUn;
 wire BSel;
 wire [1:0] ASel;
 wire ALUSel;
@@ -74,7 +75,7 @@ wire [31:0] ALUOut;
 wire [31:0] PC_mux_out;
 
 /* Program Counter Adder */
-PC pc0 (
+PCAdder pc0 (
   .PC_Cur(PC_Cur),
   .PC_Next(PC_Next)
 );
@@ -94,8 +95,9 @@ PARAM_REGISTER pc_reg (
   .q(PC_Cur)
 );
 
-##comment for @matias below
-assign icache_addr = PC_Cur;   @matias ichache adress is an output and you are setting it to something.
+// comment for @matias below
+assign icache_addr = PC_Cur;   // @matias ichache adress is an output and you are setting it to something.
+                               // Yeah that's what we're supposed to be doing I think
 
 
 
@@ -110,11 +112,12 @@ assign icache_addr = PC_Cur;   @matias ichache adress is an output and you are s
 wire [31:0] PC_Decode_Stage;
 wire [31:0] imm;
 
-PARAM_REGISTER PC_I_to_D (
+PARAM_REGISTER#(WIDTH=32) PC_I_to_D (
   .clk(clk),
   .d(PC_Cur),
   .q(PC_Decode_Stage)
 );
+
 
 
 
@@ -181,28 +184,28 @@ PARAM_REGISTER#(WIDTH=32) reg_read_data_1 (
   .out(rs1_data_ALU)
 );
 
-PARAM_REGISTER reg_read_data21 (WIDTH=32) (
+PARAM_REGISTER#(WIDTH=32) reg_read_data_2 (
   .clk(clk),
   .reset(reset),
   .in(rs2_data),
   .out(rs2_data_ALU)
 );
 
-PARAM_REGISTER pc_ID_to_ALU (WIDTH=32) (
+PARAM_REGISTER#(WIDTH=32) pc_ID_to_ALU  (
   .clk(clk),
   .reset(reset),
   .in(PC_Decode_Stage),
   .out(PC_ALU)
 );
 
-PARAM_REGISTER imm_ID_to_ALU (WIDTH=32) (
+PARAM_REGISTER#(WIDTH=32) imm_ID_to_ALU (
   .clk(clk),
   .reset(reset),
   .in(imm),
   .out(imm_ALU)
 );
 
-PARAM_REGISTER instr_ID_to_ALU (WIDTH=32) (
+PARAM_REGISTER#(WIDTH=32) instr_ID_to_ALU (
   .clk(clk),
   .reset(reset),
   .in(icache_dout),
@@ -217,9 +220,11 @@ PARAM_REGISTER instr_ID_to_ALU (WIDTH=32) (
 // #TODO  instr_ALU should go to the control logic
 
 
+/* PC+4 for mux */
+wire [31:0] X_PC_Next;
 
 /* BranchComp Output Signals for CONTROL LOGIC */
-wire Brun // input from control logic to branch comp
+wire BrUn // input from control logic to branch comp
 wire BrEq; // output from branch comp to control logic
 wire BrLT; // output from branch comp to control logic
 
@@ -231,7 +236,7 @@ wire [31:0] B_mux_out;
 
 
 // ALU Control Logic
-wire [3:0] ALU_sel; // output from control logic to ALU;
+wire [3:0] ALUop; // output from control logic to ALU;
 wire [31:0] ALUOut; // output from ALU to control logic
 
 
@@ -240,17 +245,22 @@ wire [31:0] ALUOut; // output from ALU to control logic
 BranchComp branchcomp0 (
   .RegData1(rs1_data_ALU),
   .RegData2(rs2_data_ALU),
-  .BrUn(Brun),
+  .BrUn(BrUn),
   .BrEq(BrEq),
   .BrLT(BrLT)
 );
 
 
+PCAdder X_PCAdder (
+  .PC_Cur(PC_ALU),
+  .PC_Next(X_PC_Next)
+);
+
 /* A_sel Sel Mux with forwarding */
 mux_4_to_1 A_mux (
-  .in_1(PC_ALU), 
-  .in_2(rs1_data_ALU),
-  .in_3(PC+4 from forwarding)          //  <--- #TODO
+  .in_1(rs1_data_ALU), 
+  .in_2(PC_ALU),
+  .in_3(X_PC_Next)          //  <--- #TODO
   .in_4( REG WRITE DATA from forwarding)  //  <---    #TODO
   .sel(ASel),
   .out(A_mux_out)
@@ -267,8 +277,25 @@ mux_2_to_1 B_mux (
 ALU alu0 (
   .A(A_mux_out),
   .B(B_mux_out),
-  .ALU_sel(ALU_sel),
+  .ALUop(ALUop),
   .ALUOut(ALUOut)
+);
+
+ALUdec ALUDec0 (
+  .opcode(X_opcode),
+  .funct(X_funct3),
+  .add_rshift_type(instr_ALU[30]),
+  .ALUop(ALUop)
+);
+
+XLogic x_control (
+  .opcode(instr_ALU[6:0]),
+  .funct3(instr_ALU[14:12]),
+  .BrEq(BrEq),
+  .BrLT(BrLT),
+  .ASel(ASel),
+  .BSel(BSel),
+  .PCSel(PCSel)
 );
 
 
@@ -287,34 +314,34 @@ wire [31:0] inst_MEM_WB;
 
 
 ///---------Registers from ALU to (MEM + WB) stage---------///
-PARAM_REGISTER pc_ALU_to_MEM_WB (WIDTH=32) (
+PARAM_REGISTER#(WIDTH=32) pc_ALU_to_MEM_WB (
   .clk(clk),
   .reset(reset),
   .in(PC_ALU),
   .out(PC_MEM_WB)
 );
 
-PARAM_REGISTER ALU_to_MEM_WB (WIDTH=32) (
+PARAM_REGISTER#(WIDTH=32) ALU_to_MEM_WB (
   .clk(clk),
   .reset(reset),
   .in(ALUOut),
   .out(ALUOut_MEM_WB)
 );
-PARAM_REGISTER ALU_to_MEM_WB (WIDTH=32) (
+PARAM_REGISTER#(WIDTH=32) ALU_to_MEM_WB (
   .clk(clk),
   .reset(reset),
   .in(ALUOut),
   .out(ALUOut_MEM_WB)
 );
 
-PARAM_REGISTER rs2_data_ALU_to_MEM_WB (WIDTH=32) ( // mem write data
+PARAM_REGISTER#(WIDTH=32) rs2_data_ALU_to_MEM_WB ( // mem write data
   .clk(clk),
   .reset(reset),
   .in(rs2_data_ALU),
   .out(rs2_data_MEM_WB)
 );
 
-PARAM_REGISTER inst_ALU_to_MEM_WB (WIDTH=32) (
+PARAM_REGISTER#(WIDTH=32) inst_ALU_to_MEM_WB (
   .clk(clk),
   .reset(reset),
   .in(instr_ALU),
@@ -338,7 +365,7 @@ PARAM_REGISTER inst_ALU_to_MEM_WB (WIDTH=32) (
     // input [31:0] dcache_dout, 
   
 
-  @matias
+  //@matias
   //I am confused with that is dcache dout
 
   wire [31:0] rs2_data_MEM_WB ;
@@ -358,7 +385,7 @@ PARAM_REGISTER inst_ALU_to_MEM_WB (WIDTH=32) (
 
   //PC+4 MEM_WB STAGE
   wire [31:0] PC_MEM_WB_PLUS_4 ;
-  PC PC_MEM_WB(
+  PCAdder PC_MEM_WB(
     .PC_Cur(PC_MEM_WB),
     .PC_Next(PC_MEM_WB_PLUS_4)
   )
