@@ -404,6 +404,7 @@ PARAM_REGISTER#(WIDTH=32) inst_ALU_to_MEM_WB (
   );
 
 //@francesco + @matias how to do the write back???
+//Also update the instruction to RegWriteAdress -> look at CS 61C full datapath
   assign RegWriteData =  
 
   
