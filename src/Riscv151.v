@@ -273,13 +273,7 @@ mux_2_to_1 B_mux (
   .out(B_mux_out)
 );
 
-/* ALU Instatiation */
-ALU alu0 (
-  .A(A_mux_out),
-  .B(B_mux_out),
-  .ALUop(ALUop),
-  .ALUOut(ALUOut)
-);
+
 
 ALUdec ALUDec0 (
   .opcode(X_opcode),
@@ -288,11 +282,21 @@ ALUdec ALUDec0 (
   .ALUop(ALUop)
 );
 
+/* ALU Instatiation */
+ALU alu0 (
+  .A(A_mux_out),
+  .B(B_mux_out),
+  .ALUop(ALUop),
+  .ALUOut(ALUOut)
+);
+
+
 XLogic x_control (
   .opcode(instr_ALU[6:0]),
   .funct3(instr_ALU[14:12]),
   .BrEq(BrEq),
-  .BrLT(BrLT),
+  .BrLT(BrLT), // @matias add branch unsign signal
+  .BrUn(),
   .ASel(ASel),
   .BSel(BSel),
   .PCSel(PCSel)
@@ -321,20 +325,20 @@ PARAM_REGISTER#(WIDTH=32) pc_ALU_to_MEM_WB (
   .out(PC_MEM_WB)
 );
 
-PARAM_REGISTER#(WIDTH=32) ALU_to_MEM_WB (
+PARAM_REGISTER#(WIDTH=32) ALU_to_MEM_WB ( // @francesco remove register and adapt wires to assign dcache address  = ......
   .clk(clk),
   .reset(reset),
   .in(ALUOut),
   .out(ALUOut_MEM_WB)
 );
-PARAM_REGISTER#(WIDTH=32) ALU_to_MEM_WB (
-  .clk(clk),
-  .reset(reset),
-  .in(ALUOut),
-  .out(ALUOut_MEM_WB)
-);
+// PARAM_REGISTER#(WIDTH=32) ALU_to_MEM_WB (
+//   .clk(clk),
+//   .reset(reset),
+//   .in(ALUOut),
+//   .out(ALUOut_MEM_WB)
+// );
 
-PARAM_REGISTER#(WIDTH=32) rs2_data_ALU_to_MEM_WB ( // mem write data
+PARAM_REGISTER#(WIDTH=32) rs2_data_ALU_to_MEM_WB ( //  @francesco  remove register and adapt wires to assign dcache data  = ......
   .clk(clk),
   .reset(reset),
   .in(rs2_data_ALU),
@@ -365,7 +369,7 @@ PARAM_REGISTER#(WIDTH=32) inst_ALU_to_MEM_WB (
     // input [31:0] dcache_dout, 
   
 
-  //@matias
+  //from @francesco @matias
   //I am confused with that is dcache dout
 
   wire [31:0] rs2_data_MEM_WB ;
@@ -392,11 +396,15 @@ PARAM_REGISTER#(WIDTH=32) inst_ALU_to_MEM_WB (
 
 
   mux_3_to_1 mux_MEM_WB(
-    .in_1(),
+    .in_1(), // @francesco + @matias
     .in_2(ALUOut_MEM_WB),
     .in_3(PC_MEM_WB_PLUS_4),
-    .sel(WB_sel)
+    .sel(WB_sel),
+    .out(out)
   );
+
+//@francesco + @matias how to do the write back???
+  assign RegWriteData =  
 
   
 

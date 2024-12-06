@@ -4,6 +4,7 @@ module XLogic (
     input BrEq,
     input BrLT,
 
+    output BrUn,
     output [1:0] ASel,
     output BSel,
     output PCSel
@@ -11,7 +12,7 @@ module XLogic (
 );
 
 always@(*) begin
-  if (funct3)
+  if (funct3) //
   case (opcode)
     `OPC_ARI_RTYPE: begin
       ASel = 0;
