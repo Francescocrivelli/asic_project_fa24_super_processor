@@ -50,7 +50,6 @@ wire BSel;
 wire [1:0] ASel;
 wire ALUSel;
 wire MemRW;
-wire WBSel;
 
 /* RegFile Input Signals */
 wire [4:0] RegWriteIndex;
@@ -136,8 +135,8 @@ regFile RegFile(
   .we(RegWEn),
 
   //write back data
-  .wb_addr(icache_dout[11:7]),
-  .wb_data(RegWriteData),
+  .wb_addr(inst_MEM_WB[11:7]), // comes from MEM/WB stage
+  .wb_data(reg_write_data),    // ^ same
 
   // read adress input
   .rs1_addr(icache_dout[19:15]),
@@ -224,7 +223,7 @@ PARAM_REGISTER#(WIDTH=32) instr_ID_to_ALU (
 wire [31:0] X_PC_Next;
 
 /* BranchComp Output Signals for CONTROL LOGIC */
-wire BrUn // input from control logic to branch comp
+wire BrUn; // input from control logic to branch comp
 wire BrEq; // output from branch comp to control logic
 wire BrLT; // output from branch comp to control logic
 
@@ -296,7 +295,7 @@ XLogic x_control (
   .funct3(instr_ALU[14:12]),
   .BrEq(BrEq),
   .BrLT(BrLT), // @matias add branch unsign signal
-  .BrUn(),
+  .BrUn(BrUn),
   .ASel(ASel),
   .BSel(BSel),
   .PCSel(PCSel)
@@ -358,7 +357,7 @@ PARAM_REGISTER#(WIDTH=32) inst_ALU_to_MEM_WB (
 //----------------------BEGINING      ( MEM + WB)      STAGE----------------//
 //**********************************************************************//
 
-// AS of now the memory is the dcache, later we will implement our chache
+// AS of now the memory is the dcache, later we will implement our cache
 
     // output [31:0] dcache_addr,  
     // output [31:0] icache_addr,
@@ -371,21 +370,25 @@ PARAM_REGISTER#(WIDTH=32) inst_ALU_to_MEM_WB (
 
   //from @francesco @matias
   //I am confused with that is dcache dout
+  // To @francesco: dcache_dout is the output of DMEM
+  //                that goes into WBSel mux
 
   wire [31:0] rs2_data_MEM_WB ;
 
   wire [31:0] pc_MEM_WB_plus_4;
+
+  wire [31:0] reg_write_data;
   
 
   //Memory
   assign dcache_addr = ALUOut_MEM_WB;
   assign dcache_din = rs2_data_ALU;
   assign dcache_we = MemRW;
-  assign dcache_dout = what is the difference ?
-  assign dcache_re = what is the difference ?
+  assign dcache_dout = // what is the difference ? 
+  assign dcache_re = //what is the difference ?
 
   //control path for the mux
-  wire WB_sel;
+  wire WBSel;
 
   //PC+4 MEM_WB STAGE
   wire [31:0] PC_MEM_WB_PLUS_4 ;
@@ -399,13 +402,18 @@ PARAM_REGISTER#(WIDTH=32) inst_ALU_to_MEM_WB (
     .in_1(), // @francesco + @matias
     .in_2(ALUOut_MEM_WB),
     .in_3(PC_MEM_WB_PLUS_4),
-    .sel(WB_sel),
-    .out(out)
+    .sel(WBSel),
+    .out(reg_write_data)
+  );
+
+  MemWBLogic mem_wb_control(
+    .opcode(inst_MEM_WB[6:0]),
+    .WBSel(WBSel),
+    .RegWEn(RegWEn)
   );
 
 //@francesco + @matias how to do the write back???
 //Also update the instruction to RegWriteAdress -> look at CS 61C full datapath
-  assign RegWriteData =  
 
   
 

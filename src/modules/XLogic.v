@@ -70,7 +70,10 @@ always@(*) begin
           if (!BrEq)
             PCSel = 1;
         end
-        default: PCSel = 0;
+        default: begin
+          PCSel = 0;
+          BrUn = 0;
+        end
       endcase
     end
     `OPC_JAL: begin
