@@ -285,15 +285,16 @@ PCAdder X_PCAdder (
 mux_4_to_1 A_mux (
   .in_1(rs1_data_ALU), 
   .in_2(PC_ALU),
-  .in_3(X_PC_Next)          //  <--- #TODO
-  .in_4( REG WRITE DATA from forwarding)  //  <---    #TODO
+  .in_3(reg_write_data)          //  <--- #TODO
+  .in_4(X_PC_Next)  //  <---    #TODO
   .sel(ASel),
   .out(A_mux_out)
 );
 
-mux_2_to_1 B_mux (
+mux_3_to_1 B_mux (
   .in_1(rs2_data_ALU),
   .in_2(imm_ALU),
+  .in_3(reg_write_data)
   .sel(BSel),
   .out(B_mux_out)
 );
@@ -325,7 +326,10 @@ XLogic x_control (
   .ASel(ASel),
   .BSel(BSel),
   .PCSel(PCSel)
+  .prev_inst(inst_MEM_WB)
 );
+
+
 
 
 ///////////////////////////////////////////////////////////////////////
@@ -337,7 +341,6 @@ wire [31:0] PC_MEM_WB;
 // wire [31:0] ALUOut_MEM_WB;
 // wire [31:0] rs2_data_MEM_WB; // rs2 is the only thing that we can write back to the memory stage, rs1 is generally the offset
 wire [31:0] inst_MEM_WB; 
-
 
 
 
@@ -376,6 +379,8 @@ PARAM_REGISTER#(WIDTH=32) inst_ALU_to_MEM_WB (
   .in(instr_ALU),
   .out(inst_MEM_WB)
 );
+
+
 
 
 

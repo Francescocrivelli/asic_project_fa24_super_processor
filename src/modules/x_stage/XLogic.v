@@ -3,6 +3,11 @@ module XLogic (
     input [2:0] funct3,
     input BrEq,
     input BrLT,
+    input X_inst;
+    input [31:0] D_inst;
+    input [31:0] Mem_WB_inst;
+    input [31:0] prev_inst;
+
 
     output BrUn,
     output [1:0] ASel,
@@ -11,8 +16,24 @@ module XLogic (
 
 );
 
+// Opcode values
+reg [6:0] X_opcode;
+reg [6:0] D_opcode;
+reg [6:0] Mem_WB_opcode;
+
+// rd values
+reg [4:0] X_rd;
+reg [4:0] D_rd;
+reg [4:0] Mem_WB_rd;
+
+always @(*) begin
+  if ()
+end
+
+
+
+
 always@(*) begin
-  if (funct3) //
   case (opcode)
     `OPC_ARI_RTYPE: begin
       ASel = 0;
