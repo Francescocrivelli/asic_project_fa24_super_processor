@@ -24,7 +24,7 @@ always @ (*) begin
             imm = {{20{inst[31]}}, inst[31:20]};
         end
         `I_star: begin
-            imm = {28{1'b0}, inst[24:20]};
+            imm = {{27{1'b0}}, inst[24:20]};
         end
         `S: begin
             imm = {{20{inst[31]}}, inst[31:25], inst[11:7]};

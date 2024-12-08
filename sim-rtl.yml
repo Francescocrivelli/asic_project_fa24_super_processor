@@ -30,6 +30,17 @@ simVerilogSrc: &SIM_VERILOG_SRC
   - "src/ALUTestbench.v"
   - "src/ALUTestVectorTestbench.v"
   - "src/riscv_test_harness.v"
+  - "src/modules/EECS151.v"
+  - "src/modules/d_stage/DLogic.v"
+  - "src/modules/d_stage/immGen.v"
+  - "src/modules/d_stage/regFile.v"
+  - "src/modules/mem_wb_stage/MemWBLogic.v"
+  - "src/modules/x_stage/BranchComp.v"
+  - "src/modules/x_stage/XLogic.v"
+  - "src/modules/mux_2_to_1.v"
+  - "src/modules/mux_3_to_1.v"
+  - "src/modules/mux_4_to_1.v"
+  - "src/modules/PC_Adder.v"
   # Add more files here if you need
 
 # tb_name: &TB_NAME "ALUTestbench"

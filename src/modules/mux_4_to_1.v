@@ -1,8 +1,8 @@
 module mux_4_to_1( // input are defoult to wire
-    input [31:0] input_1,
-    input [31:0] input_2,
-    input [31:0] input_3,
-    input [31:0] input_4,
+    input [31:0] in_1,
+    input [31:0] in_2,
+    input [31:0] in_3,
+    input [31:0] in_4,
     output reg [31:0] out,
     input [1:0] sel
 );

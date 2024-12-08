@@ -4,6 +4,6 @@ module mux_2_to_1(
     input wire sel,
     output wire[31:0] out
 );
-assign out = (sel) ? in_2 : in_1
+assign out = (sel) ? in_2 : in_1;
 
 endmodule

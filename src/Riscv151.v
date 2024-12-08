@@ -24,7 +24,7 @@ wire [6:0] opcode = icache_dout[6:0];
 wire [4:0] rd;
 wire [4:0] rs1;
 wire [4:0] rs2;
-wire [2:0] funct3 = icache_dout[];
+//wire [2:0] funct3 = icache_dout[];
 wire [6:0] funct7;
 wire [11:0] imm;
 
@@ -39,7 +39,7 @@ parameter AUIPC_TYPE = 7'b0010111;
 parameter LUI_TYPE = 7'b0110111;
 
 /* Control Logic Output Signals */
-reg PCSel;
+reg [1:0] PCSel;
 wire RegWEn;
 //wire BrUn;
 wire BSel;
@@ -50,7 +50,6 @@ wire MemRW;
 /* RegFile Input Signals */
 wire [4:0] RegWriteIndex;
 // wire [4:0] ReadIndex1;
-// wire [4:0] ReadIndex2;
 wire [31:0] RegWriteData;
 
 /* RegFile Output Signals */
@@ -73,11 +72,13 @@ wire [31:0] PC_mux_out;
 
 ///---------Registers from MEM + WB -> IF stage---------///
 
+
+
 /* Register for PC value */
 PARAM_REGISTER pc_reg (
   .clk(clk),
-  .d(PC_mux_out),
-  .q(PC_Cur)
+  .in(PC_mux_out),
+  .out(PC_Cur)
 );
 
 
@@ -85,6 +86,7 @@ PARAM_REGISTER pc_reg (
 //----------------------BEGINING INSTRUCTION FETCH STAGE----------------//
 //**********************************************************************//
 
+wire [31:0] PC_reset;
 
 /* Program Counter Adder */
 PCAdder pc0 (
@@ -93,9 +95,10 @@ PCAdder pc0 (
 );
 
 /* PC Sel Mux */
-mux_2_to_1 pcMux (
+mux_3_to_1 pcMux (
   .in_1(PC_Next),
   .in_2(ALUOut),
+  .in_3(PC_reset),
   .sel(PCSel),
   .out(PC_mux_out)
 );
@@ -132,10 +135,10 @@ wire [31:0] instr_ALU;
 wire [31:0] PC_Decode_Stage;
 wire [31:0] imm;
 
-PARAM_REGISTER#(WIDTH=32) PC_I_to_D (
+PARAM_REGISTER#(32) PC_I_to_D (
   .clk(clk),
-  .d(PC_Cur),
-  .q(PC_Decode_Stage)
+  .in(PC_Cur),
+  .out(PC_Decode_Stage)
 );
 
 
@@ -202,35 +205,35 @@ wire [31:0] instr_ALU;
 
 ///---------Registers from DECODE -> (ALU) stage---------///
 /*pipelined register after regfile*/
-PARAM_REGISTER#(WIDTH=32) reg_read_data_1 (
+PARAM_REGISTER#(32) reg_read_data_1 (
   .clk(clk),
   .reset(reset),
   .in(rs1_data),
   .out(rs1_data_ALU)
 );
 
-PARAM_REGISTER#(WIDTH=32) reg_read_data_2 (
+PARAM_REGISTER#(32) reg_read_data_2 (
   .clk(clk),
   .reset(reset),
   .in(rs2_data),
   .out(rs2_data_ALU)
 );
 
-PARAM_REGISTER#(WIDTH=32) pc_ID_to_ALU  (
+PARAM_REGISTER#(32) pc_ID_to_ALU  (
   .clk(clk),
   .reset(reset),
   .in(PC_Decode_Stage),
   .out(PC_ALU)
 );
 
-PARAM_REGISTER#(WIDTH=32) imm_ID_to_ALU (
+PARAM_REGISTER#(32) imm_ID_to_ALU (
   .clk(clk),
   .reset(reset),
   .in(imm),
   .out(imm_ALU)
 );
 
-PARAM_REGISTER#(WIDTH=32) instr_ID_to_ALU (
+PARAM_REGISTER#(32) instr_ID_to_ALU (
   .clk(clk),
   .reset(reset),
   .in(icache_dout),
@@ -255,7 +258,7 @@ wire BrLT; // output from branch comp to control logic
 
 // ALU 4-1 control logic
 wire [1:0] A_sel; // output from control logic to ALU
-wire B_sel; // output from control logic to ALU
+wire [1:0] B_sel; // output from control logic to ALU
 wire [31:0] A_mux_out;
 wire [31:0] B_mux_out;
 
@@ -263,6 +266,14 @@ wire [31:0] B_mux_out;
 // ALU Control Logic
 wire [3:0] ALUop; // output from control logic to ALU;
 wire [31:0] ALUOut; // output from ALU to control logic
+
+// DMem Signals
+wire DMem_re;
+
+assign dcache_dout = rs2_data_ALU; 
+assign dcache_re = DMem_re;
+
+
 
 
 
@@ -285,8 +296,8 @@ PCAdder X_PCAdder (
 mux_4_to_1 A_mux (
   .in_1(rs1_data_ALU), 
   .in_2(PC_ALU),
-  .in_3(reg_write_data)          //  <--- #TODO
-  .in_4(X_PC_Next)  //  <---    #TODO
+  .in_3(reg_write_data),          //  <--- #TODO
+  .in_4(X_PC_Next),  //  <---    #TODO
   .sel(ASel),
   .out(A_mux_out)
 );
@@ -294,7 +305,7 @@ mux_4_to_1 A_mux (
 mux_3_to_1 B_mux (
   .in_1(rs2_data_ALU),
   .in_2(imm_ALU),
-  .in_3(reg_write_data)
+  .in_3(reg_write_data),
   .sel(BSel),
   .out(B_mux_out)
 );
@@ -302,8 +313,8 @@ mux_3_to_1 B_mux (
 
 
 ALUdec ALUDec0 (
-  .opcode(X_opcode),
-  .funct(X_funct3),
+  .opcode(instr_ALU[6:0]),
+  .funct(instr_ALU[14:12]),
   .add_rshift_type(instr_ALU[30]),
   .ALUop(ALUop)
 );
@@ -313,11 +324,12 @@ ALU alu0 (
   .A(A_mux_out),
   .B(B_mux_out),
   .ALUop(ALUop),
-  .ALUOut(ALUOut)
+  .Out(ALUOut)
 );
 
 
 XLogic x_control (
+  .reset(reset),
   .opcode(instr_ALU[6:0]),
   .funct3(instr_ALU[14:12]),
   .BrEq(BrEq),
@@ -325,8 +337,9 @@ XLogic x_control (
   .BrUn(BrUn),
   .ASel(ASel),
   .BSel(BSel),
-  .PCSel(PCSel)
-  .prev_inst(inst_MEM_WB)
+  .PCSel(PCSel),
+  .prev_inst(inst_MEM_WB),
+  .DMem_re(DMem_re)
 );
 
 
@@ -346,14 +359,14 @@ wire [31:0] inst_MEM_WB;
 
 
 ///---------Registers from ALU to (MEM + WB) stage---------///
-PARAM_REGISTER#(WIDTH=32) pc_ALU_to_MEM_WB (
+PARAM_REGISTER#(32) pc_ALU_to_MEM_WB (
   .clk(clk),
   .reset(reset),
   .in(PC_ALU),
   .out(PC_MEM_WB)
 );
 
-PARAM_REGISTER#(WIDTH=32) ALU_to_MEM_WB ( // @francesco remove register and adapt wires to assign dcache address  = ......
+PARAM_REGISTER#(32) ALU_to_MEM_WB ( // @francesco remove register and adapt wires to assign dcache address  = ......
   .clk(clk),
   .reset(reset),
   .in(ALUOut),
@@ -366,14 +379,14 @@ PARAM_REGISTER#(WIDTH=32) ALU_to_MEM_WB ( // @francesco remove register and adap
 //   .out(ALUOut_MEM_WB)
 // );
 
-PARAM_REGISTER#(WIDTH=32) rs2_data_ALU_to_MEM_WB ( //  @francesco  remove register and adapt wires to assign dcache data  = ......
+PARAM_REGISTER#(32) rs2_data_ALU_to_MEM_WB ( //  @francesco  remove register and adapt wires to assign dcache data  = ......
   .clk(clk),
   .reset(reset),
   .in(rs2_data_ALU),
   .out(rs2_data_MEM_WB)
 );
 
-PARAM_REGISTER#(WIDTH=32) inst_ALU_to_MEM_WB (
+PARAM_REGISTER#(32) inst_ALU_to_MEM_WB (
   .clk(clk),
   .reset(reset),
   .in(instr_ALU),
@@ -415,18 +428,16 @@ PARAM_REGISTER#(WIDTH=32) inst_ALU_to_MEM_WB (
   assign dcache_addr = ALUOut_MEM_WB;
   assign dcache_din = rs2_data_ALU;
   assign dcache_we = MemRW;
-  assign dcache_dout = // what is the difference ? 
-  assign dcache_re = //what is the difference ?
 
   //control path for the mux
   wire WBSel;
 
   //PC+4 MEM_WB STAGE
   wire [31:0] PC_MEM_WB_PLUS_4 ;
-  PCAdder PC_MEM_WB(
+  PCAdder PC_mem_adder(
     .PC_Cur(PC_MEM_WB),
     .PC_Next(PC_MEM_WB_PLUS_4)
-  )
+  );
 
 
   mux_3_to_1 mux_MEM_WB(
@@ -464,22 +475,17 @@ PARAM_REGISTER#(WIDTH=32) inst_ALU_to_MEM_WB (
 
 
 
-  always @ (*) begin
-    if (reset) begin 
-      PC = `PC_RESET;
 
-    end
-    case (opcode)
-      `OPC_ARI_RTYPE: begin
-        RegWriteIndex = icache_dout[11:7];
-        ReadIndex1 = icache_dout[19:15];
-        ReadIndex2 = icache_dout[24:20];
+    // case (opcode)
+    //   `OPC_ARI_RTYPE: begin
+    //     RegWriteIndex = icache_dout[11:7];
+    //     ReadIndex1 = icache_dout[19:15];
+    //     ReadIndex2 = icache_dout[24:20];
         
-      end
+    //   end
 
-    if ()
-    endcase
-  end
+    // endcase
+
   
 
   // // CSR

@@ -95,12 +95,16 @@ endmodule // RAM
 
  // Parameterized Register of D-Type Flip-flops
 module PARAM_REGISTER # (parameter WIDTH = 1) (
-   
-   input [WIDTH-1:0]      d; 
-   input 	     clk;
-   
-   output reg [WIDTH-1:0] q;
+   input reset,
+   input [WIDTH-1:0] in, 
+   input clk,
+
+   output reg [WIDTH-1:0] out
 );
    always @(posedge clk)
-    q <= d;
+   if (reset) begin
+      out <= {WIDTH{1'b0}};
+   end else begin
+    out <= in;
+   end
 endmodule // REGISTER

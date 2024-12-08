@@ -21,7 +21,7 @@
 
     // read the data of rs1
     output[31:0] rs1_data,
-    output[31:0] rs2_data,
+    output[31:0] rs2_data
  );
 
  reg [31:0] regs [31:0];
@@ -36,6 +36,6 @@
     end
     if (we) begin
         regs[wb_addr] <= wb_data;
-    end else
+    end
  end
  endmodule
