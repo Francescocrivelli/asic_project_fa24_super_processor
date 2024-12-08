@@ -18,9 +18,6 @@ module Riscv151(
     output [31:0] csr
 );
 
-/* Program Counter */
-reg [31:0] PC_Next;
-reg [31:0] PC_Cur;
 
 /* Various ISA Bits */
 wire [6:0] opcode = icache_dout[6:0];
@@ -44,7 +41,7 @@ parameter LUI_TYPE = 7'b0110111;
 /* Control Logic Output Signals */
 reg PCSel;
 wire RegWEn;
-wire [4:0] ImmSel;
+wire [2:0] ImmSel;
 //wire BrUn;
 wire BSel;
 wire [1:0] ASel;
@@ -67,11 +64,28 @@ wire [31:0] ALUOut;
 
 
 
+//--------- Wires output for register DECODE -> (ALU) stage---------//
+
+/* Program Counter */
+reg [31:0] PC_Next;
+reg [31:0] PC_Cur;
+
+wire [31:0] PC_mux_out;
+
+///---------Registers from MEM + WB -> IF stage---------///
+
+/* Register for PC value */
+PARAM_REGISTER pc_reg (
+  .clk(clk),
+  .d(PC_mux_out),
+  .q(PC_Cur)
+);
+
+
 //**********************************************************************//
 //----------------------BEGINING INSTRUCTION FETCH STAGE----------------//
 //**********************************************************************//
 
-wire [31:0] PC_mux_out;
 
 /* Program Counter Adder */
 PCAdder pc0 (
@@ -87,18 +101,26 @@ mux_2_to_1 pcMux (
   .out(PC_mux_out)
 );
 
-/* Register for PC value */
-PARAM_REGISTER pc_reg (
-  .clk(clk),
-  .d(PC_mux_out),
-  .q(PC_Cur)
-);
+
 
 // comment for @matias below
 assign icache_addr = PC_Cur;   // @matias ichache adress is an output and you are setting it to something.
                                // Yeah that's what we're supposed to be doing I think
 
+//--------- Wires output for register DECODE -> (ALU) stage---------//
 
+wire [31:0] rs1_data_ALU;
+wire [31:0] rs2_data_ALU;
+wire [31:0] PC_ALU;
+wire [31:0] imm_ALU;
+wire [31:0] instr_ALU;
+
+
+
+
+
+
+///---------Registers from DECODE -> (ALU) stage---------///
 
 
 /////////////////////////////////////////////////////////////////////////
@@ -151,10 +173,15 @@ regFile RegFile(
 wire [31:0] imm;
 
 immGen imm_gen(
-
   .inst(icache_dout),
   .imm_sel(ImmSel),
   .imm(imm)
+);
+
+DLogic d_control(
+  .opcode(icache_dout[6:0]),
+  .funct3(icache_dout[11:7]),
+  .ImmSel(ImmSel)
 );
 
 ///////////////////////////////////////////////////////////////////////
@@ -399,7 +426,7 @@ PARAM_REGISTER#(WIDTH=32) inst_ALU_to_MEM_WB (
 
 
   mux_3_to_1 mux_MEM_WB(
-    .in_1(), // @francesco + @matias
+    .in_1(dcache_dout), // @francesco + @matias DONE 
     .in_2(ALUOut_MEM_WB),
     .in_3(PC_MEM_WB_PLUS_4),
     .sel(WBSel),
