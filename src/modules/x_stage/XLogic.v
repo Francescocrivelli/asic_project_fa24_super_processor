@@ -26,8 +26,16 @@ reg [4:0] X_rd;
 reg [4:0] D_rd;
 reg [4:0] Mem_WB_rd;
 
+@matias we need to merge this block with the below control logic. maybe maybe its fine there
 always @(*) begin
-  if ()
+  // Forward from MEM stage if rd matches rs1/rs2 and reg write is enabled
+    if (Mem_WB_inst[11:7] != 0 && Mem_WB_inst[11:7] == X_inst[19:15]) ASel = 2'b10;
+    else if (D_inst[11:7] != 0 && D_inst[11:7] == X_inst[19:15]) ASel = 2'b01;
+    else ASel = 2'b00;
+
+    if (Mem_WB_inst[11:7] != 0 && Mem_WB_inst[11:7] == X_inst[24:20]) BSel = 2'b10;
+    else if (D_inst[11:7] != 0 && D_inst[11:7] == X_inst[24:20]) BSel = 2'b01;
+    else BSel = 2'b00;
 end
 
 
