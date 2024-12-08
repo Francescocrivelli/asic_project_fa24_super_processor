@@ -41,7 +41,6 @@ parameter LUI_TYPE = 7'b0110111;
 /* Control Logic Output Signals */
 reg PCSel;
 wire RegWEn;
-wire [2:0] ImmSel;
 //wire BrUn;
 wire BSel;
 wire [1:0] ASel;
@@ -146,7 +145,7 @@ PARAM_REGISTER#(WIDTH=32) PC_I_to_D (
 //----------------------BEGINING       DECODE      STAGE----------------//
 //**********************************************************************//
 
-
+wire [2:0] ImmSel;
 
 /* RegFile Instatiation */
 regFile RegFile(
