@@ -96,8 +96,6 @@ mux_2_to_1 pcMux (
 assign icache_addr = PC_Cur;   // @matias ichache adress is an output and you are setting it to something.
                                // Yeah that's what we're supposed to be doing I think
 
-assign icache_re = 1;
-
 
 
 /////////////////////////////////////////////////////////////////////////
@@ -123,14 +121,18 @@ PARAM_REGISTER#(32) PC_I_to_D (
 //----------------------BEGINING       DECODE      STAGE----------------//
 //**********************************************************************//
 
+wire [31:0] instr_ALU;
+
 wire [2:0] ImmSel;
 
 // Mem_wb signal for regfile write
 wire [31:0] inst_MEM_WB; 
 
 wire [31:0] reg_write_data; // data to be written to reg file
+wire [4:0] rs1_addr;
+wire [4:0] rs2_addr;
 
-
+wire [31:0] next_inst;
 
 /* RegFile Instatiation */
 regFile RegFile(
@@ -162,9 +164,14 @@ immGen imm_gen(
 );
 
 DLogic d_control(
-  .opcode(icache_dout[6:0]),
-  .funct3(icache_dout[14:12]),
-  .ImmSel(ImmSel)
+  .D_inst(icache_dout),
+  .X_inst(instr_ALU),
+  .Mem_WB_inst(inst_MEM_WB),
+  .ImmSel(ImmSel),
+  .icache_re(icache_re),
+  .rs1_addr(rs1_addr),
+  .rs2_addr(rs2_addr),
+  .next_inst(next_inst)
 );
 
 ///////////////////////////////////////////////////////////////////////
@@ -177,7 +184,6 @@ wire [31:0] rs1_data_ALU;
 wire [31:0] rs2_data_ALU;
 wire [31:0] PC_ALU;
 wire [31:0] imm_ALU;
-wire [31:0] instr_ALU;
 
 
 
@@ -217,7 +223,7 @@ PARAM_REGISTER#(32) imm_ID_to_ALU (
 PARAM_REGISTER#(32) instr_ID_to_ALU (
   .clk(clk),
   .reset(reset),
-  .in(icache_dout),
+  .in(next_inst),
   .out(instr_ALU)
 );
 
@@ -276,8 +282,8 @@ PCAdder X_PCAdder (
 mux_4_to_1 A_mux (
   .in_1(rs1_data_ALU), 
   .in_2(PC_ALU),
-  .in_3(reg_write_data),          //  <--- #TODO
-  .in_4(X_PC_Next),  //  <---    #TODO
+  .in_3(reg_write_data),          //  <--- #TODO --> Done
+  .in_4(X_PC_Next),  //  <---    #TODO --->Done
   .sel(ASel),
   .out(A_mux_out)
 );
@@ -289,6 +295,8 @@ mux_3_to_1 B_mux (
   .sel(BSel),
   .out(B_mux_out)
 );
+
+
 
 
 

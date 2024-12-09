@@ -162,6 +162,7 @@ always@(*) begin
         csr_output = 0;
       end
       `OPC_JAL: begin
+        PCSel = 1'b1;
         ASel = 1;
         BSel = 1;
         DMem_re = 0;
