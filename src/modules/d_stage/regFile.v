@@ -28,11 +28,14 @@
  assign rs1_data = regs[rs1_addr];
  assign rs2_data = regs[rs2_addr];
 
+// integer for reset loop
+ integer i;
+
  always @(posedge clk) begin
     if (reset) begin
-        we <=0;
-        wb_addr <= 0;
-        wb_addr <= 0;
+        for (i = 0; i < 32; i = i + 1) begin
+            regs[i] <= 32'b0;
+        end
     end
     if (we) begin
         regs[wb_addr] <= wb_data;

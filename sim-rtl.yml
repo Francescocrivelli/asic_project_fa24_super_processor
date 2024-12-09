@@ -30,7 +30,7 @@ simVerilogSrc: &SIM_VERILOG_SRC
   - "src/ALUTestbench.v"
   - "src/ALUTestVectorTestbench.v"
   - "src/riscv_test_harness.v"
-  - "src/modules/EECS151.v"
+  - "src/EECS151.v"
   - "src/modules/d_stage/DLogic.v"
   - "src/modules/d_stage/immGen.v"
   - "src/modules/d_stage/regFile.v"

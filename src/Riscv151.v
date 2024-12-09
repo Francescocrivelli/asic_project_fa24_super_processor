@@ -19,14 +19,6 @@ module Riscv151(
 );
 
 
-/* Various ISA Bits */
-wire [6:0] opcode = icache_dout[6:0];
-wire [4:0] rd;
-wire [4:0] rs1;
-wire [4:0] rs2;
-//wire [2:0] funct3 = icache_dout[];
-wire [6:0] funct7;
-wire [11:0] imm;
 
 /* ISA Constants */
 parameter R_TYPE = 7'b0110011;
@@ -39,16 +31,12 @@ parameter AUIPC_TYPE = 7'b0010111;
 parameter LUI_TYPE = 7'b0110111;
 
 /* Control Logic Output Signals */
-reg [1:0] PCSel;
+wire PCSel;
 wire RegWEn;
 //wire BrUn;
-wire BSel;
-wire [1:0] ASel;
-wire ALUSel;
-wire MemRW;
 
 /* RegFile Input Signals */
-wire [4:0] RegWriteIndex;
+//wire [4:0] RegWriteIndex;
 // wire [4:0] ReadIndex1;
 wire [31:0] RegWriteData;
 
@@ -75,7 +63,8 @@ wire [31:0] PC_mux_out;
 
 
 /* Register for PC value */
-PARAM_REGISTER pc_reg (
+PARAM_REGISTER_PC#(32) pc_reg (
+  .reset(reset),
   .clk(clk),
   .in(PC_mux_out),
   .out(PC_Cur)
@@ -86,7 +75,6 @@ PARAM_REGISTER pc_reg (
 //----------------------BEGINING INSTRUCTION FETCH STAGE----------------//
 //**********************************************************************//
 
-wire [31:0] PC_reset;
 
 /* Program Counter Adder */
 PCAdder pc0 (
@@ -95,10 +83,9 @@ PCAdder pc0 (
 );
 
 /* PC Sel Mux */
-mux_3_to_1 pcMux (
+mux_2_to_1 pcMux (
   .in_1(PC_Next),
   .in_2(ALUOut),
-  .in_3(PC_reset),
   .sel(PCSel),
   .out(PC_mux_out)
 );
@@ -109,20 +96,8 @@ mux_3_to_1 pcMux (
 assign icache_addr = PC_Cur;   // @matias ichache adress is an output and you are setting it to something.
                                // Yeah that's what we're supposed to be doing I think
 
-//--------- Wires output for register DECODE -> (ALU) stage---------//
+assign icache_re = 1;
 
-wire [31:0] rs1_data_ALU;
-wire [31:0] rs2_data_ALU;
-wire [31:0] PC_ALU;
-wire [31:0] imm_ALU;
-wire [31:0] instr_ALU;
-
-
-
-
-
-
-///---------Registers from DECODE -> (ALU) stage---------///
 
 
 /////////////////////////////////////////////////////////////////////////
@@ -150,6 +125,13 @@ PARAM_REGISTER#(32) PC_I_to_D (
 
 wire [2:0] ImmSel;
 
+// Mem_wb signal for regfile write
+wire [31:0] inst_MEM_WB; 
+
+wire [31:0] reg_write_data; // data to be written to reg file
+
+
+
 /* RegFile Instatiation */
 regFile RegFile(
   .clk(clk),
@@ -172,7 +154,6 @@ regFile RegFile(
 
 );
 
-wire [31:0] imm;
 
 immGen imm_gen(
   .inst(icache_dout),
@@ -182,7 +163,7 @@ immGen imm_gen(
 
 DLogic d_control(
   .opcode(icache_dout[6:0]),
-  .funct3(icache_dout[11:7]),
+  .funct3(icache_dout[14:12]),
   .ImmSel(ImmSel)
 );
 
@@ -257,8 +238,8 @@ wire BrEq; // output from branch comp to control logic
 wire BrLT; // output from branch comp to control logic
 
 // ALU 4-1 control logic
-wire [1:0] A_sel; // output from control logic to ALU
-wire [1:0] B_sel; // output from control logic to ALU
+wire [1:0] ASel; // output from control logic to ALU
+wire [1:0] BSel;  // output from control logic to ALU
 wire [31:0] A_mux_out;
 wire [31:0] B_mux_out;
 
@@ -270,7 +251,6 @@ wire [31:0] ALUOut; // output from ALU to control logic
 // DMem Signals
 wire DMem_re;
 
-assign dcache_dout = rs2_data_ALU; 
 assign dcache_re = DMem_re;
 
 
@@ -339,7 +319,10 @@ XLogic x_control (
   .BSel(BSel),
   .PCSel(PCSel),
   .prev_inst(inst_MEM_WB),
-  .DMem_re(DMem_re)
+  .RegReadData1(rs1_data_ALU),
+  .DMem_re(DMem_re),
+  .csr_output(csr),
+  .imm(imm_ALU)
 );
 
 
@@ -351,9 +334,8 @@ XLogic x_control (
 
 wire MemRW; // from control logic to memory stage
 wire [31:0] PC_MEM_WB;
-// wire [31:0] ALUOut_MEM_WB;
+wire [31:0] ALUOut_MEM_WB;
 // wire [31:0] rs2_data_MEM_WB; // rs2 is the only thing that we can write back to the memory stage, rs1 is generally the offset
-wire [31:0] inst_MEM_WB; 
 
 
 
@@ -366,31 +348,19 @@ PARAM_REGISTER#(32) pc_ALU_to_MEM_WB (
   .out(PC_MEM_WB)
 );
 
-PARAM_REGISTER#(32) ALU_to_MEM_WB ( // @francesco remove register and adapt wires to assign dcache address  = ......
-  .clk(clk),
-  .reset(reset),
-  .in(ALUOut),
-  .out(ALUOut_MEM_WB)
-);
-// PARAM_REGISTER#(WIDTH=32) ALU_to_MEM_WB (
-//   .clk(clk),
-//   .reset(reset),
-//   .in(ALUOut),
-//   .out(ALUOut_MEM_WB)
-// );
-
-PARAM_REGISTER#(32) rs2_data_ALU_to_MEM_WB ( //  @francesco  remove register and adapt wires to assign dcache data  = ......
-  .clk(clk),
-  .reset(reset),
-  .in(rs2_data_ALU),
-  .out(rs2_data_MEM_WB)
-);
 
 PARAM_REGISTER#(32) inst_ALU_to_MEM_WB (
   .clk(clk),
   .reset(reset),
   .in(instr_ALU),
   .out(inst_MEM_WB)
+);
+
+PARAM_REGISTER#(32) ALUOut_to_WB (
+  .clk(clk),
+  .reset(reset),
+  .in(ALUOut),
+  .out(ALUOut_MEM_WB)
 );
 
 
@@ -409,28 +379,20 @@ PARAM_REGISTER#(32) inst_ALU_to_MEM_WB (
     // output dcache_re,
     // output icache_re, //
     // output [31:0] dcache_din,
-    // input [31:0] dcache_dout, 
   
 
-  //from @francesco @matias
-  //I am confused with that is dcache dout
-  // To @francesco: dcache_dout is the output of DMEM
-  //                that goes into WBSel mux
-
-  wire [31:0] rs2_data_MEM_WB ;
 
   wire [31:0] pc_MEM_WB_plus_4;
 
-  wire [31:0] reg_write_data;
   
 
   //Memory
-  assign dcache_addr = ALUOut_MEM_WB;
+  assign dcache_addr = ALUOut;
   assign dcache_din = rs2_data_ALU;
   assign dcache_we = MemRW;
 
   //control path for the mux
-  wire WBSel;
+  wire [1:0] WBSel;
 
   //PC+4 MEM_WB STAGE
   wire [31:0] PC_MEM_WB_PLUS_4 ;

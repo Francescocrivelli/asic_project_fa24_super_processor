@@ -11,6 +11,7 @@ module immGen (
 `define J     3'd3
 `define I     3'd4
 `define I_star     3'd5
+`define CSR   3'd6
 
 
 
@@ -37,6 +38,9 @@ always @ (*) begin
         end
         `J: begin //20 bits immediate before sign extension
             imm = {{12{inst[31]}}, inst[31], inst[19:12], inst[20], inst[30:21], 1'b0};
+        end
+        `CSR: begin
+            imm = {{27{1'b0}}, inst[19:15]};
         end
         default: imm = 32'd0;
     endcase 

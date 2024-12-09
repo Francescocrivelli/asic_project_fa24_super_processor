@@ -31,6 +31,9 @@
 `define OPC_ARI_RTYPE   7'b0110011
 `define OPC_ARI_ITYPE   7'b0010011
 
+
+// CSR Address
+`define CSR_TOHOST 12'h51E // address of the register
 // Control status register
 `define OPC_CSR         7'b1110011
 
