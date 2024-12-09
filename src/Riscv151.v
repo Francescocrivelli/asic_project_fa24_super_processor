@@ -114,6 +114,7 @@ wire [31:0] imm;
 
 PARAM_REGISTER#(32) PC_I_to_D (
   .clk(clk),
+  .reset(reset)
   .in(PC_Cur),
   .out(PC_Decode_Stage)
 );
@@ -334,7 +335,11 @@ XLogic x_control (
   .RegReadData1(rs1_data_ALU),
   .DMem_re(DMem_re),
   .csr_output(csr),
-  .imm(imm_ALU)
+  .imm(imm_ALU),
+  .X_inst(instr_ALU),
+  .D_inst(icache_dout), 
+  .Mem_WB_inst(inst_MEM_WB), 
+  .MemRW(MemRW) 
 );
 
 
@@ -477,5 +482,5 @@ PARAM_REGISTER#(32) ALUOut_to_WB (
     tohost <= csr;
   end
   
-
+// @matias there is a problem with MemRW
 endmodule

@@ -1,6 +1,6 @@
 module MemWBLogic (
     input [6:0] opcode,
-    input funct3,
+    input [2:0] funct3,
     input [1:0] addr_lsb,
 
     
@@ -59,6 +59,6 @@ always@(*) begin
         end
     endcase
 end
-assign dcache_re = write_mask
+assign dcache_re = write_mask;
 
 endmodule
