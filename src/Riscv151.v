@@ -50,6 +50,10 @@ wire [31:0] ALUOut;
 
 
 
+
+
+
+
 //--------- Wires output for register DECODE -> (ALU) stage---------//
 
 /* Program Counter */
@@ -392,12 +396,17 @@ PARAM_REGISTER#(32) ALUOut_to_WB (
 
   wire [31:0] pc_MEM_WB_plus_4;
 
+
   
 
   //Memory
   assign dcache_addr = ALUOut;
   assign dcache_din = rs2_data_ALU;
   assign dcache_we = MemRW;
+
+    // for lsb for the bit masking
+  wire [1:0] addr_lsb;
+  assign addr_lsb = ALUOut[1:0];
 
   //control path for the mux
   wire [1:0] WBSel;
@@ -420,8 +429,11 @@ PARAM_REGISTER#(32) ALUOut_to_WB (
 
   MemWBLogic mem_wb_control(
     .opcode(inst_MEM_WB[6:0]),
+    .funct3(inst_MEM_WB[14:12]), //@matias, it wont affect  other instructions because in the WB+MEM lOGIC the func3 is only used for store instructions
+    .addr_lsb(addr_lsb),
     .WBSel(WBSel),
-    .RegWEn(RegWEn)
+    .RegWEn(RegWEn),
+    .write_mask(dcache_we)
   );
 
 //@francesco + @matias how to do the write back???
