@@ -38,7 +38,6 @@ wire RegWEn;
 /* RegFile Input Signals */
 //wire [4:0] RegWriteIndex;
 // wire [4:0] ReadIndex1;
-wire [31:0] RegWriteData;
 
 /* RegFile Output Signals */
 wire [31:0] rs1_data;
@@ -97,8 +96,7 @@ mux_2_to_1 pcMux (
 
 
 // comment for @matias below
-assign icache_addr = PC_Cur;   // @matias ichache adress is an output and you are setting it to something.
-                               // Yeah that's what we're supposed to be doing I think
+assign icache_addr = PC_Cur;  
 
 
 
@@ -114,7 +112,7 @@ wire [31:0] imm;
 
 PARAM_REGISTER#(32) PC_I_to_D (
   .clk(clk),
-  .reset(reset)
+  .reset(reset),
   .in(PC_Cur),
   .out(PC_Decode_Stage)
 );
@@ -134,10 +132,14 @@ wire [2:0] ImmSel;
 wire [31:0] inst_MEM_WB; 
 
 wire [31:0] reg_write_data; // data to be written to reg file
+wire [4:0] reg_write_addr; // address for write back
 wire [4:0] rs1_addr;
 wire [4:0] rs2_addr;
 
 wire [31:0] next_inst;
+
+assign reg_write_addr = inst_MEM_WB[11:7];
+
 
 /* RegFile Instatiation */
 regFile RegFile(
@@ -148,7 +150,7 @@ regFile RegFile(
   .we(RegWEn),
 
   //write back data
-  .wb_addr(inst_MEM_WB[11:7]), // comes from MEM/WB stage
+  .wb_addr(reg_write_addr), // comes from MEM/WB stage
   .wb_data(reg_write_data),    // ^ same
 
   // read adress input
@@ -326,7 +328,7 @@ XLogic x_control (
   .opcode(instr_ALU[6:0]),
   .funct3(instr_ALU[14:12]),
   .BrEq(BrEq),
-  .BrLT(BrLT), // @matias add branch unsign signal
+  .BrLT(BrLT), 
   .BrUn(BrUn),
   .ASel(ASel),
   .BSel(BSel),
@@ -334,7 +336,6 @@ XLogic x_control (
   .prev_inst(inst_MEM_WB),
   .RegReadData1(rs1_data_ALU),
   .DMem_re(DMem_re),
-  .csr_output(csr),
   .imm(imm_ALU),
   .X_inst(instr_ALU),
   .D_inst(icache_dout), 
@@ -425,7 +426,7 @@ PARAM_REGISTER#(32) ALUOut_to_WB (
 
 
   mux_3_to_1 mux_MEM_WB(
-    .in_1(dcache_dout), // @francesco + @matias DONE 
+    .in_1(dcache_dout), 
     .in_2(ALUOut_MEM_WB),
     .in_3(PC_MEM_WB_PLUS_4),
     .sel(WBSel),
@@ -439,6 +440,12 @@ PARAM_REGISTER#(32) ALUOut_to_WB (
     .WBSel(WBSel),
     .RegWEn(RegWEn),
     .write_mask(dcache_we)
+  );
+
+  CSRLogic csr_control(
+    .RegWriteData(reg_write_data),
+    .Opcode(inst_MEM_WB[6:0]),
+    .csr_output(csr)
   );
 
 //@francesco + @matias how to do the write back???

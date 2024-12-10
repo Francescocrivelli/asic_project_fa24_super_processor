@@ -54,6 +54,9 @@ always@(*) begin
         `ALU_SRL: begin
             sol = A >> B[4:0];
         end
+        `ALU_COPY_A: begin
+            sol = A;
+        end
         `ALU_COPY_B: begin
             sol = B;
         end

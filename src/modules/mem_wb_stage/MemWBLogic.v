@@ -53,6 +53,10 @@ always@(*) begin
             WBSel = 2'b10;
             RegWEn = 1;
         end
+        `OPC_CSR: begin
+            WBSel = 2'b01;
+            RegWEn = 0;
+        end
         default: begin
             WBSel = 2'b00;
             RegWEn = 0;

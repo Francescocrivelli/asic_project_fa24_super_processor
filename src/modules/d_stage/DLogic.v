@@ -21,10 +21,15 @@ always @(*) begin
     // Default values
 
     // Handle No Op Case after JAL
-    if (X_inst[6:0] == `OPC_JAL || X_inst[6:0] == `OPC_JALR || 
-    Mem_WB_inst[6:0] == `OPC_JAL || Mem_WB_inst[6:0] == `OPC_JALR) begin
+    if (X_inst[6:0] == `OPC_JAL || X_inst[6:0] == `OPC_JALR) begin
         ImmSel = 3'd0;
         icache_re = 0;
+        rs1_addr = {5{1'b0}}; // no-op for rs1 rs1= x0
+        rs2_addr = {5{1'b0}};
+        next_inst = {32{1'b0}};
+    end else if (Mem_WB_inst[6:0] == `OPC_JAL || Mem_WB_inst[6:0] == `OPC_JALR) begin
+        ImmSel = 3'd0;
+        icache_re = 1;
         rs1_addr = {5{1'b0}}; // no-op for rs1 rs1= x0
         rs2_addr = {5{1'b0}};
         next_inst = {32{1'b0}};

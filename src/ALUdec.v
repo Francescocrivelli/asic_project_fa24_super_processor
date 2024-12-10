@@ -83,6 +83,13 @@ module ALUdec(
           ALUop = `ALU_SLTU;
         end
       end
+      `OPC_CSR: begin
+        if (funct == `FNC_RW) begin
+          ALUop = `ALU_COPY_A;
+        end else if (funct == `FNC_RWI) begin
+          ALUop = `ALU_COPY_B;
+        end
+      end
     endcase
   end
 

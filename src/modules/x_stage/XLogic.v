@@ -17,9 +17,7 @@ module XLogic (
     output reg [1:0] BSel,
     output reg PCSel,
     output reg DMem_re,
-    output reg MemRW,
-
-    output reg [31:0] csr_output
+    output reg MemRW
 
 );
 
@@ -52,21 +50,19 @@ end*/
 always@(*) begin
   if (reset) begin
     PCSel = 1'b0;
-    ASel = 0;
+    ASel = 2'b00;
     BSel = 1;
     DMem_re = 1;
     BrUn = 0;
-    csr_output = 0;
     MemRW = 0;
   end else begin
     case (opcode)
       `OPC_ARI_RTYPE: begin
-
         // Check if prev rd equal to cur rs1
         if (Mem_WB_inst[11:7] != 0 && Mem_WB_inst[11:7] == X_inst[19:15]) begin
           ASel = 2'b10;
         end else begin
-          ASel = 0;
+          ASel = 2'b00;
         end
         // Check if prev rd equal to cur rs2
         if (Mem_WB_inst[11:7] != 0 && Mem_WB_inst[11:7] == X_inst[24:20]) begin
@@ -75,19 +71,16 @@ always@(*) begin
           BSel = 0;
         end
         DMem_re = 0;
-        csr_output = 0;
       end
       `OPC_ARI_ITYPE: begin
-
         // Check if prev rd equal to cur rs1
         if (Mem_WB_inst[11:7] != 0 && Mem_WB_inst[11:7] == X_inst[19:15]) begin
           ASel = 2'b10;
         end else begin
-          ASel = 0;
+          ASel = 2'b00;
         end
         BSel = 1;
         DMem_re = 0;
-        csr_output = 0;
       end
       `OPC_LOAD: begin
 
@@ -99,7 +92,6 @@ always@(*) begin
         end
         BSel = 1;
         DMem_re = 1;
-        csr_output = 0;
       end
       `OPC_STORE: begin
         // Check if prev rd equal to cur rs1
@@ -110,11 +102,10 @@ always@(*) begin
         end
         BSel = 1;
         DMem_re = 0;
-        csr_output = 0;
       end
       `OPC_BRANCH: begin
 
-        ASel = 1;
+        ASel = 2'b01;
         BSel = 1;
         case (funct3)
           // beq case
@@ -159,45 +150,43 @@ always@(*) begin
           end
         endcase
         DMem_re = 0;
-        csr_output = 0;
       end
       `OPC_JAL: begin
         PCSel = 1'b1;
-        ASel = 1;
+        ASel = 2'b01;
         BSel = 1;
         DMem_re = 0;
-        csr_output = 0;
       end
       `OPC_JALR: begin
         ASel = 0;
         BSel = 1;
         DMem_re = 0;
-        csr_output = 0;
       end
       `OPC_AUIPC: begin
-        ASel = 1;
+        ASel = 2'b01;
         BSel = 1;
         DMem_re = 0;
-        csr_output = 0;
       end
       `OPC_CSR: begin
+        // Check if prev rd equal to cur rs1
         if (funct3 == `FNC_RW) begin
-          csr_output = RegReadData1;
+          if (Mem_WB_inst[11:7] != 0 && Mem_WB_inst[11:7] == X_inst[19:15]) begin
+            ASel = 2'b10;
+          end else begin
+            ASel = 2'b00;
+          end
+        end else begin
+          ASel = 2'b00;
         end
-        else if (funct3 == `FNC_RW) begin
-          csr_output = imm;
-        end
-        PCSel = 1'b0;
-        ASel = 0;
-        BSel = 1;
-        DMem_re = 0;
+          PCSel = 1'b0;
+          BSel = 1;
+          DMem_re = 0;
       end
       default: begin
           PCSel = 1'b0;
-          ASel = 0;
+          ASel = 2'b00;
           BSel = 1;
           DMem_re = 0;
-          csr_output = 0;
       end
     endcase
   end

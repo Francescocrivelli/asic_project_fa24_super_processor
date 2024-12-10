@@ -38,7 +38,10 @@
         end
     end
     if (we) begin
-        regs[wb_addr] <= wb_data;
+        if (wb_addr > 0) begin
+            regs[wb_addr] <= wb_data;
+        end
     end
+    regs[0] <= 0;
  end
  endmodule
