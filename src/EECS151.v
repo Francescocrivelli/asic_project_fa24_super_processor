@@ -1,6 +1,7 @@
 `include "const.vh"
 `include "Opcode.vh"
 
+
 /* Standard include file for EECS151.
 
  The "no flip-flop inference" policy.  Instead of using flip-flop and
@@ -129,3 +130,32 @@ module PARAM_REGISTER_PC # (parameter WIDTH = 1) (
    end
 endmodule // REGISTER
 
+
+
+
+
+// @matiaas, we added it here right? or in the data path?
+
+
+// Instantiate the cache
+cache cache_inst (
+  .clk(clk),
+  .reset(reset),
+  .cpu_req_valid(cpu_req_valid),
+  .cpu_req_ready(cpu_req_ready),
+  .cpu_req_addr(cpu_req_addr),
+  .cpu_req_data(cpu_req_data),
+  .cpu_req_write(cpu_req_write),
+  .cpu_resp_valid(cpu_resp_valid),
+  .cpu_resp_data(cpu_resp_data),
+  .mem_req_valid(mem_req_valid),
+  .mem_req_ready(mem_req_ready),
+  .mem_req_addr(mem_req_addr),
+  .mem_req_rw(mem_req_rw),
+  .mem_req_data_valid(mem_req_data_valid),
+  .mem_req_data_ready(mem_req_data_ready),
+  .mem_req_data_bits(mem_req_data_bits),
+  .mem_req_data_mask(mem_req_data_mask),
+  .mem_resp_valid(mem_resp_valid),
+  .mem_resp_data(mem_resp_data)
+);

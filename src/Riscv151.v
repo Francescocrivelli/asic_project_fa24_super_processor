@@ -490,4 +490,43 @@ PARAM_REGISTER#(32) ALUOut_to_WB (
   end
   
 // @matias there is a problem with MemRW
+
+
+
+
+
+
+///////////////////////////////////////////////////////////////////////
+/////////////////// Memory/////////////////////////////////
+/////////////////////////////////////////////////////////////////////
+
+
+Memory151 memory (
+  .clk(clk),
+  .reset(reset),
+  .dcache_addr(dcache_addr),
+  .icache_addr(icache_addr),
+  .dcache_we(dcache_we),
+  .dcache_re(dcache_re),
+  .icache_re(icache_re),
+  .dcache_din(dcache_din),
+  .dcache_dout(dcache_dout),
+  .icache_dout(icache_dout),
+  .stall(stall),
+
+  // Main memory 
+  .mem_req_valid(),
+  .mem_req_ready(),
+  .mem_req_rw(),
+  .mem_req_addr(),
+  .mem_req_tag(),
+  .mem_req_data_valid(),
+  .mem_req_data_ready(),
+  .mem_req_data_bits(),
+  .mem_req_data_mask(),
+  .mem_resp_valid(),
+  .mem_resp_data(),
+  .mem_resp_tag()
+);
+
 endmodule

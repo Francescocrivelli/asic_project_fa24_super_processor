@@ -24,3 +24,12 @@
 `define CSR_STATUS 12'h50A
 
 `endif //CONST
+
+
+
+// for the cache
+`define CACHE_LINE_WORDS 16
+`define CPU_INST_BITS 32
+`define CPU_ADDR_BITS 32
+`define MEM_DATA_BITS 128
+
