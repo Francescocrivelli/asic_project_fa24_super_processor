@@ -10,10 +10,11 @@ module XLogic (
     input [31:0] prev_inst,
     input [31:0] RegReadData1, // rs1 value for csrw instruction
     input [31:0] imm,
+    input [31:0] prev_prev_inst,
 
 
     output reg BrUn,
-    output reg [1:0] ASel,
+    output reg [2:0] ASel,
     output reg [1:0] BSel,
     output reg PCSel,
     output reg DMem_re,
@@ -32,10 +33,9 @@ reg [4:0] D_rd;
 reg [4:0] Mem_WB_rd;
 
 // @Francesco: I merged this block with below logic because we want to handle it for specific opcodes
-
 /*always @(*) begin
   // Forward from MEM stage if rd matches rs1/rs2 and reg write is enabled
-    if (Mem_WB_inst[11:7] != 0 && Mem_WB_inst[11:7] == X_inst[19:15]) ASel = 2'b10;
+    if (Mem_WB_inst[11:7] != 0 && Mem_WB_inst[11:7] == X_inst[19:15]) ASel = 3'b010;
     else if (D_inst[11:7] != 0 && D_inst[11:7] == X_inst[19:15]) ASel = 2'b01;
     else ASel = 2'b00;
 
@@ -46,11 +46,10 @@ end*/
 
 
 
-
 always@(*) begin
   if (reset) begin
     PCSel = 1'b0;
-    ASel = 2'b00;
+    ASel = 3'b000;
     BSel = 1;
     DMem_re = 1;
     BrUn = 0;
@@ -60,24 +59,30 @@ always@(*) begin
       `OPC_ARI_RTYPE: begin
         // Check if prev rd equal to cur rs1
         if (Mem_WB_inst[11:7] != 0 && Mem_WB_inst[11:7] == X_inst[19:15]) begin
-          ASel = 2'b10;
+          ASel = 3'b010;
+        // Check if second prev instruction rd equals rs2
+        end else if (prev_prev_inst != 0 && prev_prev_inst[11:7] == X_inst[19:15]) begin
+          ASel = 3'b100;
         end else begin
-          ASel = 2'b00;
+          ASel = 3'b000;
         end
         // Check if prev rd equal to cur rs2
         if (Mem_WB_inst[11:7] != 0 && Mem_WB_inst[11:7] == X_inst[24:20]) begin
           BSel = 2'b10;
+        // Check if second prev instruction rd equals rs2
+        end else if (prev_prev_inst[11:7] != 0 && prev_prev_inst[11:7] == X_inst[24:20]) begin
+          BSel = 2'b11;
         end else begin
-          BSel = 0;
+          BSel = 2'b00;
         end
         DMem_re = 0;
       end
       `OPC_ARI_ITYPE: begin
         // Check if prev rd equal to cur rs1
         if (Mem_WB_inst[11:7] != 0 && Mem_WB_inst[11:7] == X_inst[19:15]) begin
-          ASel = 2'b10;
+          ASel = 3'b010;
         end else begin
-          ASel = 2'b00;
+          ASel = 3'b000;
         end
         BSel = 1;
         DMem_re = 0;
@@ -86,9 +91,9 @@ always@(*) begin
 
         // Check if prev rd equal to cur rs1
         if (Mem_WB_inst[11:7] != 0 && Mem_WB_inst[11:7] == X_inst[19:15]) begin
-          ASel = 2'b10;
+          ASel = 3'b010;
         end else begin
-          ASel = 0;
+          ASel = 3'b000;
         end
         BSel = 1;
         DMem_re = 1;
@@ -96,16 +101,16 @@ always@(*) begin
       `OPC_STORE: begin
         // Check if prev rd equal to cur rs1
         if (Mem_WB_inst[11:7] != 0 && Mem_WB_inst[11:7] == X_inst[19:15]) begin
-          ASel = 2'b10;
+          ASel = 3'b010;
         end else begin
-          ASel = 0;
+          ASel = 3'b000;
         end
         BSel = 1;
         DMem_re = 0;
       end
       `OPC_BRANCH: begin
 
-        ASel = 2'b01;
+        ASel = 3'b001;
         BSel = 1;
         case (funct3)
           // beq case
@@ -153,17 +158,17 @@ always@(*) begin
       end
       `OPC_JAL: begin
         PCSel = 1'b1;
-        ASel = 2'b01;
+        ASel = 3'b001;
         BSel = 1;
         DMem_re = 0;
       end
       `OPC_JALR: begin
-        ASel = 0;
+        ASel = 3'b000;
         BSel = 1;
         DMem_re = 0;
       end
       `OPC_AUIPC: begin
-        ASel = 2'b01;
+        ASel = 3'b001;
         BSel = 1;
         DMem_re = 0;
       end
@@ -171,12 +176,12 @@ always@(*) begin
         // Check if prev rd equal to cur rs1
         if (funct3 == `FNC_RW) begin
           if (Mem_WB_inst[11:7] != 0 && Mem_WB_inst[11:7] == X_inst[19:15]) begin
-            ASel = 2'b10;
+            ASel = 3'b010;
           end else begin
-            ASel = 2'b00;
+            ASel = 3'b000;
           end
         end else begin
-          ASel = 2'b00;
+          ASel = 3'b000;
         end
           PCSel = 1'b0;
           BSel = 1;
@@ -184,7 +189,7 @@ always@(*) begin
       end
       default: begin
           PCSel = 1'b0;
-          ASel = 2'b00;
+          ASel = 3'b000;
           BSel = 1;
           DMem_re = 0;
       end

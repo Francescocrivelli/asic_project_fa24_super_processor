@@ -251,9 +251,9 @@ wire BrEq; // output from branch comp to control logic
 wire BrLT; // output from branch comp to control logic
 
 // ALU 4-1 control logic
-wire [1:0] ASel; // output from control logic to ALU
+wire [2:0] ASel; // output from control logic to ALU
 wire [1:0] BSel;  // output from control logic to ALU
-wire [31:0] A_mux_out;
+wire [31:0] A_mux_out; 
 wire [31:0] B_mux_out;
 
 
@@ -266,8 +266,8 @@ wire DMem_re;
 
 assign dcache_re = DMem_re;
 
-
-
+wire [31:0] prev_write_data;
+wire [31:0] prev_Mem_WB_inst;
 
 
 /* Branch Comparator Instantiation */
@@ -286,19 +286,22 @@ PCAdder X_PCAdder (
 );
 
 /* A_sel Sel Mux with forwarding */
-mux_4_to_1 A_mux (
+mux_5_to_1 A_mux (
   .in_1(rs1_data_ALU), 
   .in_2(PC_ALU),
   .in_3(reg_write_data),          //  <--- #TODO --> Done
   .in_4(X_PC_Next),  //  <---    #TODO --->Done
+  .in_5(prev_write_data),
   .sel(ASel),
   .out(A_mux_out)
 );
 
-mux_3_to_1 B_mux (
+
+mux_4_to_1 B_mux (
   .in_1(rs2_data_ALU),
   .in_2(imm_ALU),
   .in_3(reg_write_data),
+  .in_4(prev_write_data),
   .sel(BSel),
   .out(B_mux_out)
 );
@@ -465,35 +468,25 @@ PARAM_REGISTER#(32) ALUOut_to_WB (
 /////////////////////////////////////////////////////////////////////
 
 
-///---------Registers from (MEM + WB) to FETCH stage---------///
-
-
-
-
-    // case (opcode)
-    //   `OPC_ARI_RTYPE: begin
-    //     RegWriteIndex = icache_dout[11:7];
-    //     ReadIndex1 = icache_dout[19:15];
-    //     ReadIndex2 = icache_dout[24:20];
-        
-    //   end
-
-    // endcase
 
   
-
-  // // CSR
-  reg [31:0] tohost;
-
-  always @ (posedge clk) begin
-    tohost <= csr;
-  end
-  
-// @matias there is a problem with MemRW
+///---------Registers for saving output for forwarding---------///
 
 
 
+PARAM_REGISTER#(32) data_out_reg (
+  .clk(clk),
+  .reset(reset),
+  .in(reg_write_data),
+  .out(prev_write_data)
+);
 
+PARAM_REGISTER#(32) inst_out_reg (
+  .clk(clk),
+  .reset(reset),
+  .in(inst_MEM_WB),
+  .out(prev_Mem_WB_inst)
+);
 
 
 ///////////////////////////////////////////////////////////////////////
@@ -501,32 +494,32 @@ PARAM_REGISTER#(32) ALUOut_to_WB (
 /////////////////////////////////////////////////////////////////////
 
 
-Memory151 memory (
-  .clk(clk),
-  .reset(reset),
-  .dcache_addr(dcache_addr),
-  .icache_addr(icache_addr),
-  .dcache_we(dcache_we),
-  .dcache_re(dcache_re),
-  .icache_re(icache_re),
-  .dcache_din(dcache_din),
-  .dcache_dout(dcache_dout),
-  .icache_dout(icache_dout),
-  .stall(stall),
+// Memory151 memory (
+//   .clk(clk),
+//   .reset(reset),
+//   .dcache_addr(dcache_addr),
+//   .icache_addr(icache_addr),
+//   .dcache_we(dcache_we),
+//   .dcache_re(dcache_re),
+//   .icache_re(icache_re),
+//   .dcache_din(dcache_din),
+//   .dcache_dout(dcache_dout),
+//   .icache_dout(icache_dout),
+//   .stall(stall),
 
-  // Main memory 
-  .mem_req_valid(),
-  .mem_req_ready(),
-  .mem_req_rw(),
-  .mem_req_addr(),
-  .mem_req_tag(),
-  .mem_req_data_valid(),
-  .mem_req_data_ready(),
-  .mem_req_data_bits(),
-  .mem_req_data_mask(),
-  .mem_resp_valid(),
-  .mem_resp_data(),
-  .mem_resp_tag()
-);
+//   // Main memory 
+//   .mem_req_valid(),
+//   .mem_req_ready(),
+//   .mem_req_rw(),
+//   .mem_req_addr(),
+//   .mem_req_tag(),
+//   .mem_req_data_valid(),
+//   .mem_req_data_ready(),
+//   .mem_req_data_bits(),
+//   .mem_req_data_mask(),
+//   .mem_resp_valid(),
+//   .mem_resp_data(),
+//   .mem_resp_tag()
+// );
 
 endmodule

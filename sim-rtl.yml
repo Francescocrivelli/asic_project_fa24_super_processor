@@ -40,6 +40,7 @@ simVerilogSrc: &SIM_VERILOG_SRC
   - "src/modules/mux_2_to_1.v"
   - "src/modules/mux_3_to_1.v"
   - "src/modules/mux_4_to_1.v"
+  - "src/modules/mux_5_to_1.v"
   - "src/modules/PC_Adder.v"
   - "src/modules/mem_wb_stage/CSRLogic.v"
   # Add more files here if you need
