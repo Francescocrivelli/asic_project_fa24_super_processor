@@ -62,6 +62,7 @@ always@(*) begin
     flush = 0;
     branch_taken = 0;
   end else begin
+    flush = 0;
     case (opcode)
       `OPC_ARI_RTYPE: begin
         // Check if prev rd equal to cur rs1
@@ -257,10 +258,14 @@ always@(*) begin
           flush = 0;
       end
     endcase
-    if (branch_prev && (Mem_WB_inst[6:0] == `OPC_BRANCH)) begin
+    if (branch_taken || branch_prev) begin
       flush = 1;
       branch_taken = 0;
     end
+
+
+    
+
   end
 end 
 
