@@ -54,15 +54,24 @@ module cache #
 
   // SRAM instances
   sram22_256x32m4w8 data_sram[3:0] (
-    .clk(clk), .rstb(reset), .ce(1'b1),
-    .we(data_we), .wmask(4'b1111), .addr(index),
+    .clk(clk), 
+    .rstb(reset), 
+    .ce(1'b1),
+    .we(data_we), 
+    .wmask(4'b1111), 
+    .addr(index),
     .din(data_in), .dout(data_out)
   );
 
   sram22_64x32m4w8 metadata_sram (
-    .clk(clk), .rstb(reset), .ce(1'b1),
-    .we(metadata_we), .wmask(4'b1111), .addr(index),
-    .din(metadata_in), .dout(metadata_out)
+    .clk(clk), 
+    .rstb(reset), 
+    .ce(1'b1),
+    .we(metadata_we), 
+    .wmask(4'b1111), 
+    .addr(index),
+    .din(metadata_in),
+    .dout(metadata_out)
   );
 
   // State machine states

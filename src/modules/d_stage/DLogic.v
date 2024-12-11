@@ -43,6 +43,13 @@ always @(*) begin
                 rs2_addr = D_inst[24:20];
                 next_inst = D_inst;
             end
+            `OPC_LOAD: begin
+                ImmSel = 3'd4;
+                icache_re =  1;
+                rs1_addr = D_inst[19:15];
+                rs2_addr = D_inst[24:20];
+                next_inst = D_inst;
+            end 
             `OPC_BRANCH: begin
                 ImmSel = 3'd1; // Branch immediate
                 icache_re = 1;

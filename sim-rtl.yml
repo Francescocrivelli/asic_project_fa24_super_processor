@@ -44,6 +44,7 @@ simVerilogSrc: &SIM_VERILOG_SRC
   - "src/modules/PC_Adder.v"
   - "src/modules/mem_wb_stage/CSRLogic.v"
   - "src/modules/d_stage/FlushLogic.v"
+  - "src/modules/x_stage/StoreLogic.v"
   # Add more files here if you need
 
 # tb_name: &TB_NAME "ALUTestbench"

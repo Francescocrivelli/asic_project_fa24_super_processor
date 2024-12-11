@@ -270,8 +270,8 @@ wire [31:0] A_mux_out;
 wire [31:0] B_mux_out;
 
 // for lsb for the bit masking
-wire [1:0] addr_lsb;
-assign addr_lsb = ALUOut[1:0];
+wire [1:0] addr_offset;
+assign addr_offset = ALUOut[1:0];
 
 wire [3:0] MemRW; // from control logic to memory stage
 
@@ -295,6 +295,10 @@ wire [31:0] branch_data_B;
 // selector wires
 wire [1:0] branchASel;
 wire [1:0] branchBSel;
+
+wire [31:0] rs2_data_B_mux; // wire from rs2 logic to B mux
+
+wire [31:0] store_data; // masked data for store instructions
 
 /* Branch Comp A Mux */
 mux_3_to_1 branchMuxA (
@@ -342,7 +346,7 @@ mux_5_to_1 A_mux (
 
 
 mux_4_to_1 B_mux (
-  .in_1(rs2_data_ALU),
+  .in_1(rs2_data_B_mux),
   .in_2(imm_ALU),
   .in_3(reg_write_data),
   .in_4(prev_write_data),
@@ -364,6 +368,16 @@ ALU alu0 (
   .B(B_mux_out),
   .ALUop(ALUop),
   .Out(ALUOut)
+);
+
+StoreLogic forward_rs2 (
+  .RegReadData2(rs2_data_ALU),
+  .Mem_WB_inst(inst_MEM_WB),
+  .X_inst(instr_ALU),
+  .prev_prev_inst(prev_Mem_WB_inst),
+  .reg_write_data(reg_write_data),
+  .prev_write_data(prev_write_data),
+  .rs2_data(rs2_data_B_mux)
 );
 
 
@@ -390,7 +404,9 @@ XLogic x_control (
   .branch_prev(branch_prev),
   .branch_taken(branch_taken),
   .flush(flush),
-  .addr_lsb(addr_lsb)
+  .addr_offset(addr_offset),
+  .store_data(store_data),
+  .rs2_data(rs2_data_B_mux)
 );
 
 
@@ -402,7 +418,6 @@ XLogic x_control (
 
 wire [31:0] PC_MEM_WB;
 wire [31:0] ALUOut_MEM_WB;
-// wire [31:0] rs2_data_MEM_WB; // rs2 is the only thing that we can write back to the memory stage, rs1 is generally the offset
 
 
 
@@ -447,7 +462,6 @@ PARAM_REGISTER#(1) branch_prev_taken (
 
 // AS of now the memory is the dcache, later we will implement our cache
 
-    // output [31:0] dcache_addr,  
     // output [31:0] icache_addr,
     // output [3:0] dcache_we,
     // output dcache_re,
@@ -463,10 +477,10 @@ PARAM_REGISTER#(1) branch_prev_taken (
 
   //Memory
   assign dcache_addr = ALUOut;
-  assign dcache_din = rs2_data_ALU;
+  assign dcache_din = store_data;
   assign dcache_we = MemRW;
 
-  wire [31:0] maskedReadData: // input to mux that has been masked accordingly
+  wire [31:0] maskedReadData; // input to mux that has been masked accordingly
 
   //control path for the mux
   wire [1:0] WBSel;
@@ -491,10 +505,10 @@ PARAM_REGISTER#(1) branch_prev_taken (
     .opcode(inst_MEM_WB[6:0]),
     .funct3(inst_MEM_WB[14:12]),
     .addr_offset(ALUOut_MEM_WB[1:0]),
-    .MemReadData(dcache_dout)
+    .MemReadData(dcache_dout),
     .WBSel(WBSel),
     .RegWEn(RegWEn),
-    maskedReadData(maskedReadData)
+    .maskedReadData(maskedReadData)
   );
 
   CSRLogic csr_control(

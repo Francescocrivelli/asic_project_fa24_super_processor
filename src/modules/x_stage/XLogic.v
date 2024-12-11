@@ -11,7 +11,8 @@ module XLogic (
     input [31:0] imm,
     input [31:0] prev_prev_inst,
     input branch_prev,
-    input [1:0] addr_lsb,
+	input [1:0] addr_offset,
+	input [31:0] rs2_data,
 
     //output reg [3:0] MemRW, 
     output reg BrUn,
@@ -23,7 +24,8 @@ module XLogic (
     output reg [1:0] branchASel,
     output reg [1:0] branchBSel,
     output reg flush,
-    output reg branch_taken
+    output reg branch_taken,
+	output reg [31:0] store_data
 
 );
 
@@ -64,13 +66,15 @@ always@(*) begin
     flush = 0;
     branch_taken = 0;
   end else begin
+	store_data = rs2_data;
+	MemRW = 4'b0000;
     case (opcode)
       `OPC_ARI_RTYPE: begin
         // Check if prev rd equal to cur rs1
         if (Mem_WB_inst[11:7] != 0 && Mem_WB_inst[11:7] == X_inst[19:15] 
         && Mem_WB_inst[6:0] != `OPC_BRANCH && Mem_WB_inst[6:0] != `OPC_STORE) begin
           ASel = 3'b010;
-        // Check if second prev instruction rd equals rs2
+        // Check if second prev instruction rd equals rs1
         end else if (prev_prev_inst[11:7] != 0 && prev_prev_inst[11:7] == X_inst[19:15]
         && prev_prev_inst[6:0] != `OPC_BRANCH && prev_prev_inst[6:0] != `OPC_STORE) begin
           ASel = 3'b100;
@@ -81,7 +85,7 @@ always@(*) begin
         if (Mem_WB_inst[11:7] != 0 && Mem_WB_inst[11:7] == X_inst[24:20]
         && Mem_WB_inst[6:0] != `OPC_BRANCH && Mem_WB_inst[6:0] != `OPC_STORE) begin
           BSel = 2'b10;
-        // Check if second prev instruction rd equals rs2
+        // Check if second prev instruction rd equals cur rs2
         end else if (prev_prev_inst[11:7] != 0 && prev_prev_inst[11:7] == X_inst[24:20]
         && prev_prev_inst[6:0] != `OPC_BRANCH && prev_prev_inst[6:0] != `OPC_STORE) begin
           BSel = 2'b11;
@@ -97,7 +101,7 @@ always@(*) begin
         if (Mem_WB_inst[11:7] != 0 && Mem_WB_inst[11:7] == X_inst[19:15] 
         && Mem_WB_inst[6:0] != `OPC_BRANCH && Mem_WB_inst [6:0] != `OPC_STORE) begin
           ASel = 3'b010;
-          // Check if second prev instruction rd equals rs2
+        // Check if second prev instruction rd equals rs1
         end else if (prev_prev_inst[11:7] != 0 && prev_prev_inst[11:7] == X_inst[19:15]
          && prev_prev_inst[6:0] != `OPC_BRANCH && prev_prev_inst[6:0] != `OPC_STORE) begin
           ASel = 3'b100;
@@ -114,33 +118,13 @@ always@(*) begin
         if (Mem_WB_inst[11:7] != 0 && Mem_WB_inst[11:7] == X_inst[19:15]
         && Mem_WB_inst[6:0] != `OPC_BRANCH && Mem_WB_inst[6:0] != `OPC_STORE) begin
           ASel = 3'b010;
+        // Check if second prev instruction rd equals rs1
+        end else if (prev_prev_inst[11:7] != 0 && prev_prev_inst[11:7] == X_inst[19:15]
+         && prev_prev_inst[6:0] != `OPC_BRANCH && prev_prev_inst[6:0] != `OPC_STORE) begin
+          ASel = 3'b100;
         end else begin
           ASel = 3'b000;
         end
-        case (funct3)
-          `FNC_LB: begin
-              // SINGLE Byte
-              MemRW = (4'b0001 << addr_lsb);
-          end
-          `FNC_LBU: begin
-
-          end
-          `FNC_LH: begin
-              //HALF WORD
-              case (addr_lsb[1])
-                  1'b0: MemRW = 4'b0011; // Lower half-word
-                  1'b1: MemRW = 4'b1100; // Upper half-word
-              endcase
-          end
-          `FNC_LHU: begin
-            
-          end
-          `FNC_LW: begin
-              //Write the word
-              MemRW = 4'b1111;
-          end
-          default: MemRW = 4'b0000; 
-        endcase
         BSel = 1;
         DMem_re = 1;
         branch_taken = 0;
@@ -151,11 +135,55 @@ always@(*) begin
         // Check if prev rd equal to cur rs1
         if (Mem_WB_inst[11:7] != 0 && Mem_WB_inst[11:7] == X_inst[19:15]
         && Mem_WB_inst[6:0] != `OPC_BRANCH && Mem_WB_inst[6:0] != `OPC_STORE) begin
-          ASel = 3'b010;
+        	ASel = 3'b010;
+		// check is prev prev rd equals to cur rs1
+		end else if (prev_prev_inst[11:7] != 0 && prev_prev_inst[11:7] == X_inst[19:15]
+        && prev_prev_inst[6:0] != `OPC_BRANCH && prev_prev_inst[6:0] != `OPC_STORE) begin
+        	ASel = 3'b100;
         end else begin
           ASel = 3'b000;
         end
-        BSel = 1;
+		case (funct3)
+        	`FNC_SB: begin
+				// SINGLE Byte
+				case (addr_offset)
+					2'b00: begin
+						MemRW = 4'b0001;
+						store_data = rs2_data[7:0];
+					end
+					2'b01: begin
+						MemRW = 4'b0010;
+						store_data = {{16{1'b0}}, rs2_data[7:0], {8{1'b0}}};
+					end
+					2'b10: begin
+						MemRW = 4'b0100;
+						store_data = {{8{1'b0}}, rs2_data[7:0], {16{1'b0}}};
+					end
+					2'b11: begin
+						MemRW = 4'b1000;
+						store_data = {rs2_data[7:0], {24{1'b0}}};
+					end
+				endcase
+          end
+    		`FNC_SH: begin
+              case (addr_offset[1])
+                  1'b0: begin
+                      MemRW = 4'b0011;
+					  store_data = rs2_data[15:0];
+                  end
+                  1'b1: begin
+                      MemRW = 4'b1100;
+					  store_data = {rs2_data[15:0], {16{1'b0}}};
+                  end
+              endcase                
+          end
+          `FNC_SW: begin
+              //HALF WORD
+              MemRW = 4'b1111;
+			  store_data = rs2_data;
+          end
+        endcase
+		BSel = 1'b01;
         DMem_re = 0;
         PCSel = 0;
         branch_taken = 0;
