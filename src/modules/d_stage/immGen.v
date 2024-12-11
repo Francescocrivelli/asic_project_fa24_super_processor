@@ -37,7 +37,7 @@ always @ (*) begin
             imm = {inst[31:12], {12{1'b0}}};
         end
         `J: begin //20 bits immediate before sign extension
-            imm = {{12{inst[31]}}, inst[31], inst[19:12], inst[20], inst[30:21], 1'b0};
+            imm = {{11{inst[31]}}, inst[31], inst[19:12], inst[20], inst[30:21], 1'b0};
         end
         `CSR: begin
             imm = {{27{1'b0}}, inst[19:15]};

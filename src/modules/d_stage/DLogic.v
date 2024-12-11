@@ -57,14 +57,14 @@ always @(*) begin
                 rs2_addr = D_inst[24:20];
                 next_inst = D_inst;
             end
-            `OPC_JAL, `OPC_JALR: begin
+            `OPC_JAL: begin
                 ImmSel = 3'd3; // Jump immediate
                 icache_re = 0;
                 rs1_addr = D_inst[19:15];
                 rs2_addr = D_inst[24:20];
                 next_inst = D_inst;
             end
-            `OPC_ARI_ITYPE: begin
+            `OPC_ARI_ITYPE, `OPC_JALR: begin
                 if (funct3 == 3'b001 || funct3 == 3'b101) begin
                     ImmSel = 3'd5; // Shift immediate
                 end else begin

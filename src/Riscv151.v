@@ -269,6 +269,12 @@ wire [1:0] BSel;  // output from control logic to ALU
 wire [31:0] A_mux_out; 
 wire [31:0] B_mux_out;
 
+// for lsb for the bit masking
+wire [1:0] addr_lsb;
+assign addr_lsb = ALUOut[1:0];
+
+wire [3:0] MemRW; // from control logic to memory stage
+
 
 // ALU Control Logic
 wire [3:0] ALUop; // output from control logic to ALU;
@@ -383,7 +389,8 @@ XLogic x_control (
   .branchBSel(branchBSel),
   .branch_prev(branch_prev),
   .branch_taken(branch_taken),
-  .flush(flush)
+  .flush(flush),
+  .addr_lsb(addr_lsb)
 );
 
 
@@ -393,7 +400,6 @@ XLogic x_control (
 /////////////////// END ALU STAGE/////////////////////////////////
 /////////////////////////////////////////////////////////////////////
 
-wire MemRW; // from control logic to memory stage
 wire [31:0] PC_MEM_WB;
 wire [31:0] ALUOut_MEM_WB;
 // wire [31:0] rs2_data_MEM_WB; // rs2 is the only thing that we can write back to the memory stage, rs1 is generally the offset
@@ -460,9 +466,7 @@ PARAM_REGISTER#(1) branch_prev_taken (
   assign dcache_din = rs2_data_ALU;
   assign dcache_we = MemRW;
 
-    // for lsb for the bit masking
-  wire [1:0] addr_lsb;
-  assign addr_lsb = ALUOut[1:0];
+  wire [31:0] maskedReadData: // input to mux that has been masked accordingly
 
   //control path for the mux
   wire [1:0] WBSel;
@@ -476,7 +480,7 @@ PARAM_REGISTER#(1) branch_prev_taken (
 
 
   mux_3_to_1 mux_MEM_WB(
-    .in_1(dcache_dout), 
+    .in_1(maskedReadData), 
     .in_2(ALUOut_MEM_WB),
     .in_3(PC_MEM_WB_PLUS_4),
     .sel(WBSel),
@@ -485,11 +489,12 @@ PARAM_REGISTER#(1) branch_prev_taken (
 
   MemWBLogic mem_wb_control(
     .opcode(inst_MEM_WB[6:0]),
-    .funct3(inst_MEM_WB[14:12]), //@matias, it wont affect  other instructions because in the WB+MEM lOGIC the func3 is only used for store instructions
-    .addr_lsb(addr_lsb),
+    .funct3(inst_MEM_WB[14:12]),
+    .addr_offset(ALUOut_MEM_WB[1:0]),
+    .MemReadData(dcache_dout)
     .WBSel(WBSel),
     .RegWEn(RegWEn),
-    .write_mask(dcache_we)
+    maskedReadData(maskedReadData)
   );
 
   CSRLogic csr_control(
