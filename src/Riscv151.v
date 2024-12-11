@@ -131,6 +131,10 @@ wire [2:0] ImmSel;
 // Mem_wb signal for regfile write
 wire [31:0] inst_MEM_WB; 
 
+wire flush; // signal to flush in case of branch or jump
+
+wire [31:0] D_inst;
+
 wire [31:0] reg_write_data; // data to be written to reg file
 wire [4:0] reg_write_addr; // address for write back
 wire [4:0] rs1_addr;
@@ -140,6 +144,12 @@ wire [31:0] next_inst;
 
 assign reg_write_addr = inst_MEM_WB[11:7];
 
+/* Flush Block */
+FlushLogic flush_inst (
+  .icache_dout(icache_dout),
+  .flush(flush),
+  .D_inst(D_inst)
+);
 
 /* RegFile Instatiation */
 regFile RegFile(
@@ -154,8 +164,8 @@ regFile RegFile(
   .wb_data(reg_write_data),    // ^ same
 
   // read adress input
-  .rs1_addr(icache_dout[19:15]),
-  .rs2_addr(icache_dout[24:20]),
+  .rs1_addr(D_inst[19:15]),
+  .rs2_addr(D_inst[24:20]),
   
   // read data output
   .rs1_data(rs1_data), // OUTPUT DAT rs1
@@ -165,13 +175,13 @@ regFile RegFile(
 
 
 immGen imm_gen(
-  .inst(icache_dout),
+  .inst(D_inst),
   .imm_sel(ImmSel),
   .imm(imm)
 );
 
 DLogic d_control(
-  .D_inst(icache_dout),
+  .D_inst(D_inst),
   .X_inst(instr_ALU),
   .Mem_WB_inst(inst_MEM_WB),
   .ImmSel(ImmSel),
@@ -250,6 +260,9 @@ wire BrUn; // input from control logic to branch comp
 wire BrEq; // output from branch comp to control logic
 wire BrLT; // output from branch comp to control logic
 
+wire branch_prev; // signal for second flush after branch/jump
+wire branch_taken; // signal gets set to high if we branch
+
 // ALU 4-1 control logic
 wire [2:0] ASel; // output from control logic to ALU
 wire [1:0] BSel;  // output from control logic to ALU
@@ -269,11 +282,36 @@ assign dcache_re = DMem_re;
 wire [31:0] prev_write_data;
 wire [31:0] prev_Mem_WB_inst;
 
+// wires connecting output of branch muxes to branch comp module
+wire [31:0] branch_data_A;
+wire [31:0] branch_data_B;
+
+// selector wires
+wire [1:0] branchASel;
+wire [1:0] branchBSel;
+
+/* Branch Comp A Mux */
+mux_3_to_1 branchMuxA (
+  .in_1(rs1_data_ALU),
+  .in_2(reg_write_data),
+  .in_3(prev_write_data),
+  .sel(branchASel),
+  .out(branch_data_A)
+);
+
+/* Branch Comp B Mux */
+mux_3_to_1 branchMuxB (
+  .in_1(rs2_data_ALU),
+  .in_2(reg_write_data),
+  .in_3(prev_write_data),
+  .sel(branchBSel),
+  .out(branch_data_B)
+);
 
 /* Branch Comparator Instantiation */
 BranchComp branchcomp0 (
-  .RegData1(rs1_data_ALU),
-  .RegData2(rs2_data_ALU),
+  .RegData1(branch_data_A),
+  .RegData2(branch_data_B),
   .BrUn(BrUn),
   .BrEq(BrEq),
   .BrLT(BrLT)
@@ -307,9 +345,6 @@ mux_4_to_1 B_mux (
 );
 
 
-
-
-
 ALUdec ALUDec0 (
   .opcode(instr_ALU[6:0]),
   .funct(instr_ALU[14:12]),
@@ -336,14 +371,19 @@ XLogic x_control (
   .ASel(ASel),
   .BSel(BSel),
   .PCSel(PCSel),
-  .prev_inst(inst_MEM_WB),
   .RegReadData1(rs1_data_ALU),
   .DMem_re(DMem_re),
   .imm(imm_ALU),
   .X_inst(instr_ALU),
-  .D_inst(icache_dout), 
+  .D_inst(D_inst), 
   .Mem_WB_inst(inst_MEM_WB), 
-  .MemRW(MemRW) 
+  .MemRW(MemRW),
+  .prev_prev_inst(prev_Mem_WB_inst),
+  .branchASel(branchASel),
+  .branchBSel(branchBSel),
+  .branch_prev(branch_prev),
+  .branch_taken(branch_taken),
+  .flush(flush)
 );
 
 
@@ -382,6 +422,13 @@ PARAM_REGISTER#(32) ALUOut_to_WB (
   .reset(reset),
   .in(ALUOut),
   .out(ALUOut_MEM_WB)
+);
+
+PARAM_REGISTER#(1) branch_prev_taken (
+  .clk(clk),
+  .reset(reset),
+  .in(branch_taken),
+  .out(branch_prev)
 );
 
 

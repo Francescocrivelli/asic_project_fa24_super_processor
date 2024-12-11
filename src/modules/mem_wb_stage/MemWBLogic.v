@@ -18,7 +18,7 @@ always@(*) begin
     WBSel = 2'b00;
     RegWEn = 0;
     case (opcode)
-        `OPC_ARI_RTYPE, `OPC_ARI_ITYPE, `OPC_AUIPC: begin
+        `OPC_ARI_RTYPE, `OPC_ARI_ITYPE, `OPC_AUIPC, `OPC_LUI: begin
             WBSel = 2'b01;
             RegWEn = 1;
         end
