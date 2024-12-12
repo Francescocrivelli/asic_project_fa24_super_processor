@@ -19,6 +19,9 @@ module Riscv151(
 );
 
 
+`define PC_RESET 32'h00000000
+
+
 /* ISA Constants */
 parameter R_TYPE = 7'b0110011;
 parameter I_TYPE = 7'b0010011;
@@ -277,7 +280,7 @@ wire [3:0] MemRW; // from control logic to memory stage
 
 // ALU Control Logic
 wire [3:0] ALUop; // output from control logic to ALU;
-wire [31:0] ALUOut; // output from ALU to control logic
+// wire [31:0] ALUOut; // output from ALU to control logic
 
 // DMem Signals
 wire DMem_re;
@@ -559,32 +562,79 @@ PARAM_REGISTER#(32) inst_out_reg (
 /////////////////////////////////////////////////////////////////////
 
 
-Memory151 memory (
-  .clk(clk),
-  .reset(reset),
-  .dcache_addr(dcache_addr),
-  .icache_addr(icache_addr),
-  .dcache_we(dcache_we),
-  .dcache_re(dcache_re),
-  .icache_re(icache_re),
-  .dcache_din(dcache_din),
-  .dcache_dout(dcache_dout),
-  .icache_dout(icache_dout),
-  .stall(stall),
+// Memory151 memory (
+//   .clk(clk),
+//   .reset(reset),
+//   .dcache_addr(dcache_addr),
+//   .icache_addr(icache_addr),
+//   .dcache_we(dcache_we),
+//   .dcache_re(dcache_re),
+//   .icache_re(icache_re),
+//   .dcache_din(dcache_din),
+//   .dcache_dout(dcache_dout),
+//   .icache_dout(icache_dout),
+//   .stall(stall),
 
-  // Main memory 
-  .mem_req_valid(),
-  .mem_req_ready(),
-  .mem_req_rw(),
-  .mem_req_addr(),
-  .mem_req_tag(),
-  .mem_req_data_valid(),
-  .mem_req_data_ready(),
-  .mem_req_data_bits(),
-  .mem_req_data_mask(),
-  .mem_resp_valid(),
-  .mem_resp_data(),
-  .mem_resp_tag()
-);
+//   // Main memory 
+//   .mem_req_valid(),
+//   .mem_req_ready(),
+//   .mem_req_rw(),
+//   .mem_req_addr(),
+//   .mem_req_tag(),
+//   .mem_req_data_valid(),
+//   .mem_req_data_ready(),
+//   .mem_req_data_bits(),
+//   .mem_req_data_mask(),
+//   .mem_resp_valid(),
+//   .mem_resp_data(),
+//   .mem_resp_tag()
+// );
 
 endmodule
+
+
+module PARAM_REGISTER_PC # (parameter WIDTH = 1) (
+   input reset,
+   input [WIDTH-1:0] in, 
+   input clk,
+
+   output reg [WIDTH-1:0] out
+);
+   always @(posedge clk) begin
+      if (reset) begin
+         out <= `PC_RESET;
+      end else begin
+         out <= in;
+      end
+   end
+endmodule // REGISTER
+
+
+module PCAdder(
+    input [31:0] PC_Cur,
+    output [31:0] PC_Next
+);
+
+// Add 4 to the current PC value
+assign PC_Next = PC_Cur + 4;
+
+endmodule
+
+module FlushLogic (
+    input [31:0] icache_dout,
+    input flush,
+
+    output reg [31:0] D_inst
+);
+
+
+always @(*) begin
+    if (flush) begin
+        D_inst = `INSTR_NOP;
+    end else begin
+        D_inst = icache_dout;
+    end 
+end
+
+endmodule
+

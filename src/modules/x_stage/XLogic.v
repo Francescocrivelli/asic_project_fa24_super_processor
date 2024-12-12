@@ -57,12 +57,12 @@ always@(*) begin
   if (reset) begin
     PCSel = 1'b0;
     ASel = 3'b000;
-    BSel = 1;
+    BSel = 2'b01;
     DMem_re = 1;
     BrUn = 0;
-    MemRW = 0;
-    branchASel = 0;
-    branchBSel = 0;
+    MemRW = 4'b0000;
+    branchASel = 2'b00;
+    branchBSel = 2'b00;
     flush = 0;
     branch_taken = 0;
   end else begin

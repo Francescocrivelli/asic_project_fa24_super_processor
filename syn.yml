@@ -9,6 +9,23 @@ verilogSrc: &VERILOG_SRC
   - "src/Riscv151.v"
   - "src/riscv_arbiter.v"
   - "src/riscv_top.v"
+  #- "src/riscv_test_harness.v"
+  - "src/EECS151.v"
+  - "src/modules/d_stage/DLogic.v"
+  - "src/modules/d_stage/immGen.v"
+  - "src/modules/d_stage/regFile.v"
+  - "src/modules/mem_wb_stage/MemWBLogic.v"
+  - "src/modules/x_stage/BranchComp.v"
+  - "src/modules/x_stage/XLogic.v"
+  - "src/modules/mux_2_to_1.v"
+  - "src/modules/mux_3_to_1.v"
+  - "src/modules/mux_4_to_1.v"
+  - "src/modules/mux_5_to_1.v"
+  - "src/modules/PC_Adder.v"
+  - "src/modules/mem_wb_stage/CSRLogic.v"
+  - "src/modules/d_stage/FlushLogic.v"
+  - "src/modules/x_stage/StoreLogic.v"
+  # - "src/pcreg.v"
   # Add more source files here if you need
 
 
