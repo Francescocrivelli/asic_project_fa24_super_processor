@@ -26,7 +26,6 @@
 `endif //CONST
 
 
-
 // for the cache
 `define CACHE_LINE_WORDS 16
 `define CPU_INST_BITS 32
