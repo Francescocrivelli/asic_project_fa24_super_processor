@@ -19,7 +19,6 @@ module Riscv151(
 );
 
 
-
 /* ISA Constants */
 parameter R_TYPE = 7'b0110011;
 parameter I_TYPE = 7'b0010011;
