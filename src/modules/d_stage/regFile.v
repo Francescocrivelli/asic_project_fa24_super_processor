@@ -43,5 +43,8 @@
         end
     end
     regs[0] <= 0;
+
+    assert (regs[0] == 0)
+        $display("Assert PASSED: x0 == 0");
  end
  endmodule

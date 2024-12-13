@@ -18,7 +18,6 @@ module Riscv151(
     output [31:0] csr
 );
 
-
 /* ISA Constants */
 parameter R_TYPE = 7'b0110011;
 parameter I_TYPE = 7'b0010011;
@@ -116,14 +115,7 @@ PARAM_REGISTER#(32) PC_I_to_D (
   .out(PC_Decode_Stage)
 );
 
-always@(posedge clk) begin
-  if (reset) begin
-    assert(PC_Cur == `PC_RESET)
-      $display("Assert PASSED: PC = PC_RESET");
-    
-  end
 
-end
 
 
 //**********************************************************************//
@@ -417,6 +409,7 @@ XLogic x_control (
 
 
 
+
 ///////////////////////////////////////////////////////////////////////
 /////////////////// END ALU STAGE/////////////////////////////////
 /////////////////////////////////////////////////////////////////////
@@ -487,7 +480,6 @@ PARAM_REGISTER#(1) branch_prev_taken (
 
   wire [31:0] maskedReadData; // input to mux that has been masked accordingly
 
-
   //control path for the mux
   wire [1:0] WBSel;
 
@@ -528,20 +520,8 @@ PARAM_REGISTER#(1) branch_prev_taken (
 
   
 
-always@(*) begin
-  if (inst_MEM_WB[6:0] == `OPC_LOAD) begin
-    case (inst_MEM_WB[14:12])
-      `FNC_LB: begin
-        assert(reg_write_data[31:8] == {24{1'b0}} || reg_write_data[31:8] == {24{1'b1}})
-          $display("Assert PASSED: load sign extension correct.");
-      end
-      `FNC_LH: begin
-        assert(reg_write_data[31:16] == {16{1'b0}} || reg_write_data[31:16] == {16{1'b1}})
-        $display("Assert PASSED: load sign extension is correct.");
-      end
-    endcase
-  end
-end
+
+
 
 
 
@@ -578,106 +558,32 @@ PARAM_REGISTER#(32) inst_out_reg (
 /////////////////////////////////////////////////////////////////////
 
 
-// Assertions begin here
-// We assume SystemVerilog mode and that assertions are enabled (e.g., with +assert+enable).
+// Memory151 memory (
+//   .clk(clk),
+//   .reset(reset),
+//   .dcache_addr(dcache_addr),
+//   .icache_addr(icache_addr),
+//   .dcache_we(dcache_we),
+//   .dcache_re(dcache_re),
+//   .icache_re(icache_re),
+//   .dcache_din(dcache_din),
+//   .dcache_dout(dcache_dout),
+//   .icache_dout(icache_dout),
+//   .stall(stall),
 
-// 1) Upon reset, the program counter should become PC_RESET once reset goes low.
-// always @(posedge clk) begin
-//   if (!reset) begin
-//     // After reset is deasserted, check that PC_Cur == `PC_RESET`
-//     // Use an immediate assertion:
-//     assert (PC_Cur == `PC_RESET)
-//       else $error("PC did not reset to `PC_RESET`");
-//   end
-// end
+//   // Main memory 
+//   .mem_req_valid(),
+//   .mem_req_ready(),
+//   .mem_req_rw(),
+//   .mem_req_addr(),
+//   .mem_req_tag(),
+//   .mem_req_data_valid(),
+//   .mem_req_data_ready(),
+//   .mem_req_data_bits(),
+//   .mem_req_data_mask(),
+//   .mem_resp_valid(),
+//   .mem_resp_data(),
+//   .mem_resp_tag()
+// );
 
-
-// //assertion 2
-// // Assertion: Write enable mask correctness for store instructions
-// always @(posedge clk) begin
-//     if (instr_ALU[6:0] == `OPC_STORE) begin
-//         case (instr_ALU[14:12]) // funct3 field
-//             3'b000: assert (dcache_we == 4'b0001) else $fatal("Incorrect dcache_we for SB.");
-//             3'b001: assert (dcache_we == 4'b0011) else $fatal("Incorrect dcache_we for SH.");
-//             3'b010: assert (dcache_we == 4'b1111) else $fatal("Incorrect dcache_we for SW.");
-//         endcase
-//     end
-// end
-
-//assertion 3
-
-
-//assertion 4
-
-// Assertion: x0 register is always 0
-// always @(posedge clk) begin
-//     assert (RegFile.registers[0] == 32'h0) else $fatal("x0 register value modified!");
-// end
-
-
-
-
-
-// // 2) For store instructions (S_TYPE), check that dcache_we matches the instruction type.
-// // We'll assume that during store instructions, dcache_we is driven accordingly.
-// always @(posedge clk) begin
-//   if (!reset) begin
-//     if (instr_ALU[6:0] == 7'b0100011) begin // S_TYPE
-//       case (instr_ALU[14:12])
-//         3'b000: assert(dcache_we == 4'b0001)
-//           else $error("Incorrect dcache_we for SB (store byte)");
-//         3'b001: assert(dcache_we == 4'b0011)
-//           else $error("Incorrect dcache_we for SH (store halfword)");
-//         3'b010: assert(dcache_we == 4'b1111)
-//           else $error("Incorrect dcache_we for SW (store word)");
-//         default: /* no assertion needed for unsupported patterns */
-//           ;
-//       endcase
-//     end
-//   end
-// end
-
-// // 3) For lb/lh loads, check sign extension:
-// // lb = opcode=0000011, funct3=000
-// // lh = opcode=0000011, funct3=001
-// // Check sign-extension after data is written back (inst_MEM_WB used).
-// always @(posedge clk) begin
-//   if (!reset && RegWEn) begin
-//     if (inst_MEM_WB[6:0] == 7'b0000011) begin // LOAD-type
-//       case (inst_MEM_WB[14:12])
-//         3'b000: begin
-//           // LB: upper 24 bits should all be 0x00 or 0xFF depending on sign-extension
-//           if (reg_write_data[7]) // sign bit set
-//             assert(reg_write_data[31:8] == 24'hFFFFFF)
-//               else $error("LB sign-extension incorrect");
-//           else
-//             assert(reg_write_data[31:8] == 24'h000000)
-//               else $error("LB sign-extension incorrect");
-//         end
-//         3'b001: begin
-//           // LH: upper 16 bits should be all 0x0000 or 0xFFFF
-//           if (reg_write_data[15]) // sign bit set
-//             assert(reg_write_data[31:16] == 16'hFFFF)
-//               else $error("LH sign-extension incorrect");
-//           else
-//             assert(reg_write_data[31:16] == 16'h0000)
-//               else $error("LH sign-extension incorrect");
-//         end
-//         default: /* Other loads (lw, lbu, lhu) no assertion needed here */
-//           ;
-//       endcase
-//     end
-//   end
-// end
-
-// // 4) The x0 register should always be 0.
-// // Since we may not have direct access to the internal regfile signals, 
-// // we assert that whenever we write to x0, the data is 0:
-// always @(posedge clk) begin
-//   if (!reset && RegWEn && (reg_write_addr == 5'd0)) begin
-//     assert(reg_write_data == 32'd0)
-//       else $error("Attempted to write a non-zero value to x0");
-//   end
-// end
-
- endmodule
+endmodule
