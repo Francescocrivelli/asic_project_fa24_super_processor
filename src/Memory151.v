@@ -96,7 +96,6 @@ cache icache (
   .mem_resp_valid(ic_mem_resp_valid),
   .mem_resp_data(mem_resp_data)
 );
-// @matias do we add the cache in here???
 
 cache dcache (
   .clk(clk),

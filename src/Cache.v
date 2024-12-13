@@ -33,7 +33,7 @@ module cache #
   input [`MEM_DATA_BITS-1:0]  mem_resp_data
 );
 
-  localparam OFFSET_BITS = 4; // log2(16 words per line = 512 bits/32 bits per word)
+  localparam OFFSET_BITS = 6; // log2(16 words per line = 512 bits/32 bits per word)
   localparam INDEX_BITS = 6;  // log2(64 lines)
   localparam TAG_BITS = (WORD_ADDR_BITS) - OFFSET_BITS - INDEX_BITS;
 
@@ -170,9 +170,9 @@ module cache #
       end
       COMPARE: begin
         // Check valid bit
-        if (!metadata_out[31]) // Invalid line
+        if (!metadata_out[31]) begin // Invalid line
           next_state = FETCH;
-        else if (metadata_out[TAG_BITS-1:0] != tag) begin // Tag mismatch
+        end else if (metadata_out[TAG_BITS-1:0] != tag) begin // Tag mismatch
           if (metadata_out[30]) // Dirty
             next_state = WRITEBACK;
           else
@@ -256,3 +256,4 @@ module cache #
   assign mem_req_data_bits = (state == WRITEBACK) ? cache_line[mem_count*128 +: 128] : 128'b0;
 
 endmodule
+

@@ -32,17 +32,17 @@
  integer i;
 
  always @(posedge clk) begin
-    if (reset) begin
-        for (i = 0; i < 32; i = i + 1) begin
-            regs[i] <= 32'b0;
-        end
-    end
+    // if (reset) begin
+    //     for (i = 0; i < 32; i = i + 1) begin
+    //         regs[i] <= 32'b0;
+    //     end
+    // end
     if (we) begin
-        if (wb_addr > 0) begin
+        if (wb_addr >= 0) begin
             regs[wb_addr] <= wb_data;
         end
     end
-    regs[0] <= 0;
+    // regs[0] <= 0;
 
     assert (regs[0] == 0)
         $display("Assert PASSED: x0 == 0");

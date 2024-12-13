@@ -19,6 +19,9 @@ module Riscv151(
 );
 
 
+`define PC_RESET 32'h00000000
+
+
 /* ISA Constants */
 parameter R_TYPE = 7'b0110011;
 parameter I_TYPE = 7'b0010011;
@@ -284,7 +287,7 @@ wire [3:0] MemRW; // from control logic to memory stage
 
 // ALU Control Logic
 wire [3:0] ALUop; // output from control logic to ALU;
-wire [31:0] ALUOut; // output from ALU to control logic
+// wire [31:0] ALUOut; // output from ALU to control logic
 
 // DMem Signals
 wire DMem_re;
@@ -680,4 +683,51 @@ PARAM_REGISTER#(32) inst_out_reg (
 //   end
 // end
 
- endmodule
+endmodule
+
+
+module PARAM_REGISTER_PC # (parameter WIDTH = 1) (
+   input reset,
+   input [WIDTH-1:0] in, 
+   input clk,
+
+   output reg [WIDTH-1:0] out
+);
+   always @(posedge clk) begin
+      if (reset) begin
+         out <= `PC_RESET;
+      end else begin
+         out <= in;
+      end
+   end
+endmodule // REGISTER
+
+
+module PCAdder(
+    input [31:0] PC_Cur,
+    output [31:0] PC_Next
+);
+
+// Add 4 to the current PC value
+assign PC_Next = PC_Cur + 4;
+
+endmodule
+
+module FlushLogic (
+    input [31:0] icache_dout,
+    input flush,
+
+    output reg [31:0] D_inst
+);
+
+
+always @(*) begin
+    if (flush) begin
+        D_inst = `INSTR_NOP;
+    end else begin
+        D_inst = icache_dout;
+    end 
+end
+
+endmodule
+
