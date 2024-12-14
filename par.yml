@@ -48,7 +48,7 @@ vlsi.inputs.placement_constraints:
   - path: "riscv_top/mem/icache/data_sram0"
     type: hardmacro
     x: 30
-    y: 30
+    y: 30 
     orientation: "r270"
     top_layer: met3
 
