@@ -53,6 +53,7 @@ end*/
 
 
 
+
 always@(*) begin
   if (reset) begin
     PCSel = 1'b0;
@@ -150,37 +151,51 @@ always@(*) begin
 					2'b00: begin
 						MemRW = 4'b0001;
 						store_data = rs2_data[7:0];
+            assert(MemRW == 4'b0001)
+              $display("Assert PASSED: write mask is correct.");
 					end
 					2'b01: begin
 						MemRW = 4'b0010;
 						store_data = {{16{1'b0}}, rs2_data[7:0], {8{1'b0}}};
+            assert(MemRW == 4'b0010)
+              $display("Assert PASSED: write mask is correct.");
 					end
 					2'b10: begin
 						MemRW = 4'b0100;
 						store_data = {{8{1'b0}}, rs2_data[7:0], {16{1'b0}}};
+            assert(MemRW == 4'b0100)
+              $display("Assert PASSED: write mask is correct.");
 					end
 					2'b11: begin
 						MemRW = 4'b1000;
 						store_data = {rs2_data[7:0], {24{1'b0}}};
+            assert(MemRW == 4'b1000)
+              $display("Assert PASSED: write mask is correct.");
 					end
 				endcase
           end
     		`FNC_SH: begin
-              case (addr_offset[1])
-                  1'b0: begin
-                      MemRW = 4'b0011;
-					  store_data = rs2_data[15:0];
-                  end
-                  1'b1: begin
-                      MemRW = 4'b1100;
-					  store_data = {rs2_data[15:0], {16{1'b0}}};
-                  end
-              endcase                
+          case (addr_offset[1])
+            1'b0: begin
+              MemRW = 4'b0011;
+              store_data = rs2_data[15:0];
+              assert(MemRW == 4'b0011)
+              $display("Assert PASSED: write mask is correct.");
+            end
+            1'b1: begin
+              MemRW = 4'b1100;
+              store_data = {rs2_data[15:0], {16{1'b0}}};
+              assert(MemRW == 4'b1100)
+              $display("Assert PASSED: write mask is correct.");
+            end
+          endcase                
           end
           `FNC_SW: begin
-              //HALF WORD
-              MemRW = 4'b1111;
-			  store_data = rs2_data;
+            //HALF WORD
+            MemRW = 4'b1111;
+			      store_data = rs2_data;
+            assert(MemRW == 4'b1111)
+              $display("Assert PASSED: write mask is correct.");
           end
         endcase
 		BSel = 1'b01;

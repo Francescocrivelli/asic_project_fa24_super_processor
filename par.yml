@@ -47,72 +47,72 @@ vlsi.inputs.placement_constraints:
     #SRAM1RW64x32
   - path: "riscv_top/mem/icache/data_sram0"
     type: hardmacro
-    x: 30
-    y: 30 
-    orientation: "r270"
+    x: 50
+    y: 50
+    orientation: "r90"
     top_layer: met3
 
   - path: "riscv_top/mem/icache/data_sram1"
     type: hardmacro
-    x: 30
-    y: 500
-    orientation: "r270"
+    x: 50
+    y: 400
+    orientation: "r90"
     top_layer: met3
 
   - path: "riscv_top/mem/icache/data_sram2"
     type: hardmacro
-    x: 30
-    y: 1000
-    orientation: "r270"
+    x: 50
+    y: 800
+    orientation: "r90"
     top_layer: met3
 
   - path: "riscv_top/mem/icache/data_sram3"
     type: hardmacro
-    x: 30
-    y: 1400
-    orientation: "r270"
+    x: 50
+    y: 1200
+    orientation: "r90"
     top_layer: met3
 
   - path: "riscv_top/mem/icache/metadata_sram"
     type: hardmacro
-    x: 500
-    y: 30
-    orientation: "mx90"
+    x: 450
+    y: 50
+    orientation: "r180"
     top_layer: met3
 
   - path: "riscv_top/mem/dcache/data_sram0"
     type: hardmacro
-    x: 1300
-    y: 30
-    orientation: "r90"
+    x: 900
+    y: 50
+    orientation: "r270"
     top_layer: met3
 
   - path: "riscv_top/mem/dcache/data_sram1"
     type: hardmacro
-    x: 1300
-    y: 500
-    orientation: "r90"
+    x: 900
+    y: 400
+    orientation: "r270"
     top_layer: met3
 
   - path: "riscv_top/mem/dcache/data_sram2"
     type: hardmacro
-    x: 1300
-    y: 1000
-    orientation: "r90"
+    x: 900
+    y: 800
+    orientation: "r270"
     top_layer: met3
 
   - path: "riscv_top/mem/dcache/data_sram3"
     type: hardmacro
-    x: 1300
-    y: 1400
-    orientation: "r90"
+    x: 900
+    y: 1200
+    orientation: "r270"
     top_layer: met3
   
   - path: "riscv_top/mem/dcache/metadata_sram"
     type: hardmacro
-    x: 500
-    y: 1000
-    orientation: "r90"
+    x: 450
+    y: 1200
+    orientation: ""
     top_layer: met3
 
   - path: "riscv_top/place_obs_bottom"
